@@ -11,7 +11,12 @@ from datetime import datetime, date
 import json
 import os
 from pathlib import Path
-import jwt
+try:
+    import jwt
+except ImportError:
+    raise ImportError(
+        "PyJWT is not installed. Please install it with: pip install PyJWT cryptography requests"
+    )
 import requests
 from functools import lru_cache
 
