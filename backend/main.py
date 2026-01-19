@@ -3,7 +3,7 @@ Semantle Game Backend
 FastAPI server for semantic word guessing game
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -11,11 +11,96 @@ from datetime import datetime, date
 import json
 import os
 from pathlib import Path
+import jwt
+import requests
+from functools import lru_cache
 
 from game_logic import GameLogic, GameSession
 from embeddings_manager import EmbeddingsManager
 
 app = FastAPI(title="Semantle API", version="1.0.0")
+
+# Quick Auth configuration
+# Reference: https://docs.base.org/mini-apps/core-concepts/authentication
+QUICK_AUTH_ISSUER = "https://auth.farcaster.xyz"
+QUICK_AUTH_JWKS_URL = "https://auth.farcaster.xyz/.well-known/jwks.json"
+
+# Cache JWKS (JSON Web Key Set) for JWT verification
+@lru_cache(maxsize=1)
+def get_jwks():
+    """Fetch and cache JWKS from Farcaster auth server"""
+    try:
+        response = requests.get(QUICK_AUTH_JWKS_URL, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"Warning: Could not fetch JWKS: {e}")
+        return None
+
+def verify_jwt_token(token: str, domain: str) -> dict:
+    """
+    Verify JWT token from Quick Auth
+    Returns the decoded payload if valid, raises exception otherwise
+    """
+    try:
+        # Get JWKS
+        jwks = get_jwks()
+        if not jwks:
+            raise ValueError("Could not fetch JWKS")
+        
+        # Decode token header to get key ID
+        unverified_header = jwt.get_unverified_header(token)
+        kid = unverified_header.get("kid")
+        
+        if not kid:
+            raise ValueError("Token missing key ID")
+        
+        # Find the key in JWKS
+        key = None
+        for jwk in jwks.get("keys", []):
+            if jwk.get("kid") == kid:
+                # Convert JWK to public key
+                public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(jwk))
+                key = public_key
+                break
+        
+        if not key:
+            raise ValueError("Key not found in JWKS")
+        
+        # Verify and decode token
+        # Note: For development, we might want to be lenient with audience verification
+        # In production, ensure APP_DOMAIN matches your deployment domain
+        payload = jwt.decode(
+            token,
+            key,
+            algorithms=["RS256"],
+            issuer=QUICK_AUTH_ISSUER,
+            audience=domain,
+            options={"verify_exp": True, "verify_iss": True, "verify_aud": True}
+        )
+        
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise ValueError("Token has expired")
+    except jwt.InvalidTokenError as e:
+        raise ValueError(f"Invalid token: {str(e)}")
+    except Exception as e:
+        raise ValueError(f"Token verification failed: {str(e)}")
+
+def get_domain_from_request():
+    """
+    Get domain from environment variable (for JWT audience verification)
+    This should match your mini app's deployment domain
+    Set APP_DOMAIN environment variable to your domain (e.g., semantle.vercel.app)
+    """
+    domain = os.getenv("APP_DOMAIN")
+    if not domain:
+        # For development, try to be lenient
+        # In production, APP_DOMAIN must be set
+        print("Warning: APP_DOMAIN not set. JWT audience verification may fail.")
+        # Return a default that might work for localhost
+        domain = "localhost"
+    return domain
 
 # CORS middleware for React frontend
 # Get allowed origins from environment variable or use defaults
@@ -180,6 +265,40 @@ async def validate_word(word: str):
     """Check if word is in vocabulary"""
     is_valid = game_logic.is_word_valid(word.lower())
     return {"valid": is_valid, "word": word}
+
+@app.get("/api/auth")
+async def verify_auth(authorization: Optional[str] = Header(None)):
+    """
+    Verify Quick Auth JWT token and return authenticated user data
+    Reference: https://docs.base.org/mini-apps/core-concepts/authentication
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    
+    token = authorization.split(" ")[1]
+    domain = get_domain_from_request()
+    
+    try:
+        # Verify JWT token
+        payload = verify_jwt_token(token, domain)
+        
+        # Extract FID from token (sub field contains FID)
+        fid = payload.get("sub")
+        if not fid:
+            raise HTTPException(status_code=401, detail="Token missing FID")
+        
+        # Get additional user info from Farcaster context if needed
+        # For now, just return the FID from the token
+        # You could also fetch user profile from Farcaster API here
+        
+        return {
+            "fid": fid,
+            "authenticated": True
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
