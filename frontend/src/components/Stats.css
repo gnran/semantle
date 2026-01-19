@@ -21,93 +21,6 @@
   text-align: center;
 }
 
-.stats-title {
-  font-size: 2rem;
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-  color: #fff;
-  text-align: center;
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  border-radius: 12px;
-  margin-bottom: 2rem;
-  border: 1px solid rgba(102, 126, 234, 0.2);
-}
-
-.avatar-container {
-  position: relative;
-  width: 80px;
-  height: 80px;
-}
-
-.user-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid rgba(102, 126, 234, 0.5);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.user-avatar-placeholder {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: 3px solid rgba(102, 126, 234, 0.5);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  font-weight: bold;
-  color: white;
-}
-
-.user-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.user-name {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #fff;
-  margin: 0;
-  text-align: left;
-}
-
-.user-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.user-fid {
-  color: #aaa;
-  font-family: 'Courier New', monospace;
-}
-
-.user-wallet {
-  color: #667eea;
-  font-family: 'Courier New', monospace;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.user-wallet:hover {
-  color: #764ba2;
-}
-
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -246,24 +159,6 @@
   
   .stat-value {
     font-size: 2rem;
-  }
-  
-  .user-profile {
-    flex-direction: column;
-    text-align: center;
-    padding: 1rem;
-  }
-  
-  .user-info {
-    align-items: center;
-  }
-  
-  .user-name {
-    text-align: center;
-  }
-  
-  .user-details {
-    align-items: center;
   }
   
   .history-item {

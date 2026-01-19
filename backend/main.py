@@ -3,7 +3,7 @@ Semantle Game Backend
 FastAPI server for semantic word guessing game
 """
 
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -11,8 +11,6 @@ from datetime import datetime, date
 import json
 import os
 from pathlib import Path
-import jwt
-from jwt import PyJWKClient
 
 from game_logic import GameLogic, GameSession
 from embeddings_manager import EmbeddingsManager
@@ -46,61 +44,6 @@ app.add_middleware(
 # Initialize game logic and embeddings
 embeddings_manager = EmbeddingsManager()
 game_logic = GameLogic(embeddings_manager)
-
-# Quick Auth configuration
-QUICK_AUTH_ISSUER = "https://auth.farcaster.xyz"
-QUICK_AUTH_JWKS_URL = f"{QUICK_AUTH_ISSUER}/.well-known/jwks.json"
-# Get domain from environment variable, should match your mini app's deployment domain
-# For production: "semantle.vercel.app" (without https://)
-# For development: "localhost:3000" or your local domain
-APP_DOMAIN = os.getenv("APP_DOMAIN", "semantle.vercel.app")
-
-# Initialize JWKS client for JWT verification
-try:
-    jwks_client = PyJWKClient(QUICK_AUTH_JWKS_URL)
-except Exception as e:
-    print(f"Warning: Failed to initialize JWKS client: {e}")
-    jwks_client = None
-
-def verify_jwt_token(authorization: str = Header(None)) -> dict:
-    """Verify JWT token from Quick Auth and return payload"""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Unauthorized: Missing or invalid Authorization header")
-    
-    if not jwks_client:
-        raise HTTPException(status_code=500, detail="JWT verification service unavailable")
-    
-    token = authorization.split(" ")[1]
-    
-    try:
-        # Get the signing key from JWKS
-        signing_key = jwks_client.get_signing_key_from_jwt(token)
-        
-        # Verify and decode the JWT
-        # Note: For development, you might need to disable audience verification
-        # if the token was issued for a different domain
-        verify_aud = os.getenv("VERIFY_AUDIENCE", "true").lower() == "true"
-        
-        payload = jwt.decode(
-            token,
-            signing_key.key,
-            algorithms=["ES256", "RS256"],  # Common algorithms for JWTs
-            issuer=QUICK_AUTH_ISSUER,
-            audience=APP_DOMAIN if verify_aud else None,
-            options={
-                "verify_exp": True,
-                "verify_iss": True,
-                "verify_aud": verify_aud
-            }
-        )
-        
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError as e:
-        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Token verification failed: {str(e)}")
 
 # Request/Response models
 class GuessRequest(BaseModel):
@@ -237,15 +180,6 @@ async def validate_word(word: str):
     """Check if word is in vocabulary"""
     is_valid = game_logic.is_word_valid(word.lower())
     return {"valid": is_valid, "word": word}
-
-@app.get("/api/auth")
-async def authenticate_user(payload: dict = Depends(verify_jwt_token)):
-    """Authenticate user using Quick Auth JWT token"""
-    # Return the FID (Farcaster ID) from the token payload
-    return {
-        "fid": payload.get("sub"),
-        "authenticated": True
-    }
 
 if __name__ == "__main__":
     import uvicorn
