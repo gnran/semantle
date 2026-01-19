@@ -178,8 +178,8 @@ function Game({ sessionId, setSessionId }) {
         clearGameState()
         
         // Save stats with user ID
-        const userId = getUserId()
         try {
+          const userId = await getUserId()
           await axios.post(`${API_BASE}/stats/save`, {
             user_id: userId,
             session_id: gameSession.session_id,

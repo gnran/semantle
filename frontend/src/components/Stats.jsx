@@ -27,7 +27,7 @@ function Stats() {
     setIsLoading(true)
     setError(null)
     try {
-      const userId = getUserId()
+      const userId = await getUserId()
       const response = await axios.get(`${API_BASE}/stats/${userId}`)
       setStats(response.data)
     } catch (err) {

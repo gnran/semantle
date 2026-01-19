@@ -1,0 +1,222 @@
+/**
+ * Base Mini App Authentication Utility
+ * Handles Coinbase Wallet (Base Account) authentication for Base mini apps
+ */
+
+import { createBaseAccountSDK } from '@base-org/account'
+import { sdk } from '@farcaster/miniapp-sdk'
+
+// Base mainnet chain ID
+const BASE_CHAIN_ID = 8453
+
+// Initialize Base Account SDK
+let baseAccountSDK = null
+let provider = null
+let isInitialized = false
+
+/**
+ * Initialize Base Account SDK
+ */
+export function initializeAuth() {
+  if (isInitialized && baseAccountSDK) {
+    return baseAccountSDK
+  }
+
+  try {
+    baseAccountSDK = createBaseAccountSDK({
+      appName: 'Semantle',
+      appLogoUrl: 'https://semantle.vercel.app/favicon1.png',
+      appChainIds: [BASE_CHAIN_ID],
+      subAccounts: {
+        creation: 'on-connect',
+        defaultAccount: 'sub',
+        funding: 'spend-permissions'
+      }
+    })
+
+    provider = baseAccountSDK.getProvider()
+    isInitialized = true
+
+    return baseAccountSDK
+  } catch (error) {
+    console.error('Failed to initialize Base Account SDK:', error)
+    throw error
+  }
+}
+
+/**
+ * Connect wallet and authenticate user
+ * @returns {Promise<{address: string, fid?: number, username?: string}>}
+ */
+export async function connectWallet() {
+  try {
+    // Initialize SDK if not already done
+    if (!isInitialized) {
+      initializeAuth()
+    }
+
+    if (!provider) {
+      throw new Error('Base Account SDK provider not available')
+    }
+
+    // Request account connection
+    const accounts = await provider.request({ method: 'eth_requestAccounts' })
+    
+    if (!accounts || accounts.length === 0) {
+      throw new Error('No accounts returned from wallet')
+    }
+
+    const address = accounts[0]
+
+    // Get Farcaster user context if available
+    let fid = null
+    let username = null
+    
+    try {
+      const context = await sdk.context
+      if (context?.user) {
+        fid = context.user.fid
+        username = context.user.username
+      }
+    } catch (err) {
+      console.warn('Could not get Farcaster context:', err)
+      // Continue without Farcaster context
+    }
+
+    // Store auth state
+    const authState = {
+      address,
+      fid,
+      username,
+      connected: true,
+      connectedAt: Date.now()
+    }
+
+    localStorage.setItem('semantle_auth', JSON.stringify(authState))
+
+    return authState
+  } catch (error) {
+    console.error('Failed to connect wallet:', error)
+    throw error
+  }
+}
+
+/**
+ * Get current authentication state
+ * @returns {Promise<{address?: string, fid?: number, username?: string, connected: boolean}>}
+ */
+export async function getAuthState() {
+  try {
+    // Initialize provider if not already done
+    if (!isInitialized) {
+      try {
+        initializeAuth()
+      } catch (err) {
+        console.warn('Could not initialize auth SDK:', err)
+      }
+    }
+
+    // Check if already connected
+    const savedAuth = localStorage.getItem('semantle_auth')
+    if (savedAuth) {
+      const authState = JSON.parse(savedAuth)
+      
+      // Verify connection is still valid
+      if (provider) {
+        try {
+          const accounts = await provider.request({ method: 'eth_accounts' })
+          if (accounts && accounts.length > 0 && accounts[0] === authState.address) {
+            // Update Farcaster context if available
+            try {
+              const context = await sdk.context
+              if (context?.user) {
+                authState.fid = context.user.fid
+                authState.username = context.user.username
+                localStorage.setItem('semantle_auth', JSON.stringify(authState))
+              }
+            } catch (err) {
+              // Ignore Farcaster context errors
+            }
+            
+            return { ...authState, connected: true }
+          }
+        } catch (err) {
+          console.warn('Could not verify wallet connection:', err)
+        }
+      }
+    }
+
+    // Try to get Farcaster context even if wallet not connected
+    try {
+      const context = await sdk.context
+      if (context?.user) {
+        return {
+          fid: context.user.fid,
+          username: context.user.username,
+          connected: false
+        }
+      }
+    } catch (err) {
+      // Ignore errors
+    }
+
+    return { connected: false }
+  } catch (error) {
+    console.error('Failed to get auth state:', error)
+    return { connected: false }
+  }
+}
+
+/**
+ * Disconnect wallet
+ */
+export async function disconnectWallet() {
+  try {
+    localStorage.removeItem('semantle_auth')
+    
+    if (provider) {
+      // Base Account SDK doesn't have a standard disconnect method
+      // The connection persists until user manually disconnects in wallet
+      // We just clear our local state
+    }
+  } catch (error) {
+    console.error('Failed to disconnect wallet:', error)
+  }
+}
+
+/**
+ * Get user ID from authenticated wallet address or fallback to Farcaster FID
+ * @returns {Promise<string>}
+ */
+export async function getUserId() {
+  try {
+    const authState = await getAuthState()
+    
+    // Prefer wallet address as user ID
+    if (authState.address) {
+      return authState.address.toLowerCase()
+    }
+    
+    // Fallback to Farcaster FID
+    if (authState.fid) {
+      return `fid_${authState.fid}`
+    }
+    
+    // Last resort: generate a temporary ID (should prompt for auth)
+    console.warn('No authenticated user found, using temporary ID')
+    return `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  } catch (error) {
+    console.error('Failed to get user ID:', error)
+    // Fallback to temporary ID
+    return `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  }
+}
+
+/**
+ * Check if user is authenticated
+ * @returns {Promise<boolean>}
+ */
+export async function isAuthenticated() {
+  const authState = await getAuthState()
+  return authState.connected === true && !!authState.address
+}

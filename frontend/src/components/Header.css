@@ -53,6 +53,53 @@
   color: white;
 }
 
+.wallet-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.connect-wallet-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(102, 126, 234, 0.5);
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.connect-wallet-button:hover:not(:disabled) {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: #667eea;
+}
+
+.connect-wallet-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.wallet-connected {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.wallet-address {
+  font-size: 0.85rem;
+  color: #667eea;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+}
+
+.wallet-username {
+  font-size: 0.75rem;
+  color: #aaa;
+}
+
 @media (max-width: 768px) {
   .header {
     padding: 1rem;
@@ -65,5 +112,25 @@
   .nav-button {
     padding: 0.4rem 1rem;
     font-size: 0.9rem;
+  }
+
+  .header-content {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .wallet-section {
+    width: 100%;
+    justify-content: flex-end;
+    order: 3;
+  }
+
+  .connect-wallet-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .wallet-connected {
+    align-items: flex-end;
   }
 }

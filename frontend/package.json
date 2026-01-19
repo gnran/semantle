@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@base-org/account": "^2.5.1",
     "@farcaster/miniapp-sdk": "^0.2.1",
     "axios": "^1.6.2",
     "react": "^18.2.0",

@@ -1,15 +1,31 @@
 /**
  * User ID utility
- * Generates and stores a unique user ID in localStorage
+ * Uses authenticated wallet address or Farcaster FID as user ID
+ * Falls back to localStorage-based ID if not authenticated
  */
+
+import { getUserId as getAuthUserId } from './auth'
 
 const USER_ID_KEY = 'semantle_user_id'
 
 /**
- * Get or create a unique user ID
- * @returns {string} Unique user ID
+ * Get user ID from authenticated wallet or fallback to localStorage
+ * @returns {Promise<string>} Unique user ID
  */
-export function getUserId() {
+export async function getUserId() {
+  try {
+    // Try to get authenticated user ID first
+    const authUserId = await getAuthUserId()
+    
+    // If we got a real address or FID (not a temp ID), use it
+    if (authUserId && !authUserId.startsWith('temp_')) {
+      return authUserId
+    }
+  } catch (error) {
+    console.warn('Failed to get authenticated user ID, falling back to localStorage:', error)
+  }
+
+  // Fallback to localStorage-based ID
   let userId = localStorage.getItem(USER_ID_KEY)
   
   if (!userId) {
@@ -26,4 +42,5 @@ export function getUserId() {
  */
 export function resetUserId() {
   localStorage.removeItem(USER_ID_KEY)
+  localStorage.removeItem('semantle_auth')
 }
