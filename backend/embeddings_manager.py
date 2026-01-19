@@ -44,16 +44,27 @@ class EmbeddingsManager:
         # Get API key from environment variable
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
-            raise ValueError(
-                "OPENAI_API_KEY environment variable is not set.\n"
-                "Please set it using one of the following methods:\n"
+            is_railway = os.getenv("RAILWAY_ENVIRONMENT") is not None or os.getenv("RAILWAY") is not None
+            error_msg = "OPENAI_API_KEY environment variable is not set.\n\n"
+            if is_railway:
+                error_msg += (
+                    "🚨 Railway Deployment: Set the environment variable in Railway dashboard:\n"
+                    "   1. Go to your Railway project → Service → Variables tab\n"
+                    "   2. Click 'New Variable'\n"
+                    "   3. Name: OPENAI_API_KEY\n"
+                    "   4. Value: your-openai-api-key-here\n"
+                    "   5. Click 'Add' and redeploy\n\n"
+                )
+            error_msg += (
+                "For local development:\n"
                 "  1. Create a .env file in the backend directory:\n"
                 "     OPENAI_API_KEY=your-api-key-here\n"
-                "  2. Set environment variable:\n"
+                "  2. Or set environment variable:\n"
                 "     Windows PowerShell: $env:OPENAI_API_KEY='your-api-key-here'\n"
                 "     Windows CMD: set OPENAI_API_KEY=your-api-key-here\n"
                 "     Linux/Mac: export OPENAI_API_KEY='your-api-key-here'"
             )
+            raise ValueError(error_msg)
         
         self.client = OpenAI(api_key=api_key)
         self.embeddings_cache: Dict[str, np.ndarray] = {}

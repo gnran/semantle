@@ -39,15 +39,27 @@ The backend is located in the `backend/` directory. Make sure you have:
      - These automatically reference the backend directory
      - Note: Railway might detect Node.js first (due to root `package.json`), so Option 1 is preferred
 
-4. **Set Environment Variables**
-   - Go to your service → **Variables** tab
-   - Add the following variables:
+4. **Set Environment Variables** ⚠️ **REQUIRED**
+   
+   **This step is critical - the backend will not start without these variables!**
+   
+   - Go to your Railway service → **Variables** tab (or **Settings** → **Variables**)
+   - Click **"New Variable"** or **"Raw Editor"**
+   - Add the following variables (one per line if using Raw Editor):
      ```
      OPENAI_API_KEY=your-openai-api-key-here
      ALLOWED_ORIGINS=https://your-app.vercel.app,http://localhost:3000
      ```
-   - Replace `your-openai-api-key-here` with your actual OpenAI API key
-   - Replace `https://your-app.vercel.app` with your Vercel frontend URL
+   - **Important:**
+     - Replace `your-openai-api-key-here` with your actual OpenAI API key (starts with `sk-`)
+     - Replace `https://your-app.vercel.app` with your Vercel frontend URL (or leave as `http://localhost:3000` for testing)
+     - Make sure there are **no spaces** around the `=` sign
+     - After adding variables, Railway will automatically redeploy
+   - **Get your OpenAI API key:**
+     - Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+     - Sign in or create an account
+     - Click "Create new secret key"
+     - Copy the key (you won't be able to see it again!)
 
 5. **Deploy**
    - Railway will automatically start building and deploying
@@ -126,7 +138,17 @@ This is your backend API URL. You'll need this for the frontend configuration.
 
 - **Check Logs:** Go to Railway dashboard → Your service → **Deployments** → Click on the latest deployment → View logs
 - **Common Issues:**
-  - Missing `OPENAI_API_KEY` environment variable
+  - **"OPENAI_API_KEY environment variable is not set"** ⚠️ **MOST COMMON**
+    - This means you haven't set the environment variable in Railway
+    - **Solution:**
+      1. Go to Railway dashboard → Your service → **Variables** tab
+      2. Click **"New Variable"**
+      3. Name: `OPENAI_API_KEY`
+      4. Value: Your OpenAI API key (get it from [platform.openai.com/api-keys](https://platform.openai.com/api-keys))
+      5. Click **"Add"**
+      6. Railway will automatically redeploy
+    - After adding the variable, wait for the redeploy to complete
+    - Verify the variable is set: Check the Variables tab - it should show `OPENAI_API_KEY` (value is hidden for security)
   - Port configuration issues (Railway sets `PORT` automatically)
   - **"uvicorn: command not found" or "ModuleNotFoundError":**
     - Railway should automatically install dependencies from `requirements.txt`
