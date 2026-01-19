@@ -69,6 +69,23 @@ class NewGameRequest(BaseModel):
 async def root():
     return {"message": "Semantle API is running"}
 
+@app.get("/api")
+async def api_info():
+    """API information endpoint"""
+    return {
+        "message": "Semantle API",
+        "version": "1.0.0",
+        "endpoints": {
+            "game": {
+                "new": "POST /api/game/new",
+                "guess": "POST /api/game/guess",
+                "session": "GET /api/game/{session_id}"
+            },
+            "stats": "GET /api/stats/{user_id}",
+            "words": "GET /api/words/validate/{word}"
+        }
+    }
+
 @app.post("/api/game/new", response_model=GameSessionResponse)
 async def new_game(request: NewGameRequest = NewGameRequest(), debug: bool = False):
     """Start a new game session"""
