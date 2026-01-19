@@ -31,12 +31,13 @@ The backend is located in the `backend/` directory. Make sure you have:
    - Railway will detect it's a Python project
 
 3. **Configure the Service**
-   - **Option 1 (Recommended):** Leave Root Directory as root (default)
+   - **Option 1 (Recommended):** Set the **Root Directory** to `backend`
+     - Railway will use `backend/Procfile` and `backend/requirements.txt`
+     - This is the cleanest configuration
+   - **Option 2:** Leave Root Directory as root (default)
      - Railway will use the root-level `Procfile` and `requirements.txt`
      - These automatically reference the backend directory
-   - **Option 2:** Set the **Root Directory** to `backend`
-     - Railway will use `backend/Procfile` and `backend/requirements.txt`
-     - Both configurations work correctly
+     - Note: Railway might detect Node.js first (due to root `package.json`), so Option 1 is preferred
 
 4. **Set Environment Variables**
    - Go to your service → **Variables** tab
