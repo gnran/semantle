@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
+import { sdk } from '@farcaster/miniapp-sdk'
 import { getUserId } from '../utils/userId'
 import './Stats.css'
 
@@ -14,14 +15,60 @@ if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
   )
 }
 
-function Stats() {
+function Stats({ userData, userContext }) {
   const [stats, setStats] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [profile, setProfile] = useState(null)
 
   useEffect(() => {
     loadStats()
-  }, [])
+    loadProfile()
+  }, [userData, userContext])
+
+  async function loadProfile() {
+    try {
+      // Get context from SDK
+      const context = userContext || await sdk.context
+      
+      if (context?.user) {
+        setProfile({
+          fid: context.user.fid,
+          username: context.user.username,
+          displayName: context.user.displayName,
+          avatar: context.user.avatarUrl,
+          wallet: context.user.custodyAddress || context.user.verifications?.[0] || null
+        })
+      } else if (userData?.fid) {
+        // Fallback: fetch profile from API using FID
+        try {
+          const response = await fetch(`https://api.web3.bio/profile/farcaster/${userData.fid}`)
+          if (response.ok) {
+            const data = await response.json()
+            setProfile({
+              fid: userData.fid,
+              username: data.identity || data.displayName,
+              displayName: data.displayName,
+              avatar: data.avatar,
+              wallet: data.address
+            })
+          }
+        } catch (err) {
+          console.error('Failed to fetch profile from API:', err)
+          // Set basic profile with just FID
+          setProfile({
+            fid: userData.fid,
+            username: null,
+            displayName: null,
+            avatar: null,
+            wallet: null
+          })
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load profile:', err)
+    }
+  }
 
   const loadStats = async () => {
     setIsLoading(true)
@@ -72,7 +119,54 @@ function Stats() {
   return (
     <div className="stats-container">
       <div className="stats-card">
-        <h2>Your Statistics</h2>
+        {/* User Profile Section */}
+        {profile && (
+          <div className="user-profile">
+            <div className="avatar-container">
+              {profile.avatar ? (
+                <img 
+                  src={profile.avatar} 
+                  alt="Avatar" 
+                  className="user-avatar"
+                  onError={(e) => {
+                    e.target.style.display = 'none'
+                    e.target.nextSibling.style.display = 'flex'
+                  }}
+                />
+              ) : null}
+              <div 
+                className="user-avatar-placeholder"
+                style={{ display: profile.avatar ? 'none' : 'flex' }}
+              >
+                {(profile.displayName || profile.username || 'U').charAt(0).toUpperCase()}
+              </div>
+            </div>
+            <div className="user-info">
+              <h2 className="user-name">
+                {profile.displayName || profile.username || `FID: ${profile.fid}`}
+              </h2>
+              <div className="user-details">
+                {profile.fid && (
+                  <span className="user-fid">FID: {profile.fid}</span>
+                )}
+                {profile.wallet && (
+                  <span 
+                    className="user-wallet" 
+                    title={profile.wallet}
+                    onClick={() => {
+                      navigator.clipboard.writeText(profile.wallet)
+                      alert('Wallet address copied to clipboard!')
+                    }}
+                  >
+                    {profile.wallet.slice(0, 6)}...{profile.wallet.slice(-4)}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <h2 className="stats-title">Your Statistics</h2>
         
         <div className="stats-grid">
           <div className="stat-box">
