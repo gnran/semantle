@@ -3,7 +3,7 @@ import { sdk } from '@farcaster/miniapp-sdk'
 import Game from './components/Game'
 import Stats from './components/Stats'
 import Header from './components/Header'
-import LoginModal from './components/LoginModal'
+import LoadingScreen from './components/LoadingScreen'
 import FAQModal from './components/FAQModal'
 import ProfileModal from './components/ProfileModal'
 import { initializeAuth, getAuthState, connectWallet, connectFarcaster, isAuthenticated } from './utils/auth'
@@ -14,95 +14,132 @@ function App() {
   const [sessionId, setSessionId] = useState(null)
   const [authState, setAuthState] = useState({ connected: false })
   const [isConnecting, setIsConnecting] = useState(false)
-  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [connectionMessage, setConnectionMessage] = useState('Connecting...')
   const [showFAQModal, setShowFAQModal] = useState(false)
   const [showProfileModal, setShowProfileModal] = useState(false)
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const [isInitializing, setIsInitializing] = useState(true)
 
   useEffect(() => {
     // Hide loading splash screen and display the app
     sdk.actions.ready()
     
-    // Initialize Base Account SDK
-    try {
-      initializeAuth()
-    } catch (error) {
-      console.error('Failed to initialize auth:', error)
-    }
-
-    // Check existing auth state
-    checkAuthState()
+    // Initialize and auto-connect
+    initializeAndConnect()
   }, [])
 
-  const checkAuthState = async () => {
-    setIsCheckingAuth(true)
+  const initializeAndConnect = async () => {
+    setIsInitializing(true)
+    setConnectionMessage('Initializing...')
+    
     try {
-      const state = await getAuthState()
-      setAuthState(state)
+      // Initialize Base Account SDK
+      try {
+        initializeAuth()
+      } catch (error) {
+        console.error('Failed to initialize auth:', error)
+      }
+
+      // Check existing auth state first
+      setConnectionMessage('Checking authentication...')
+      const existingState = await getAuthState()
       const authenticated = await isAuthenticated()
-      setShowLoginModal(!authenticated)
+      
+      if (authenticated && existingState.connected) {
+        // Already authenticated
+        setAuthState(existingState)
+        setIsInitializing(false)
+        return
+      }
+
+      // Try to auto-connect
+      await autoConnect()
     } catch (error) {
-      console.error('Failed to check auth state:', error)
-      setShowLoginModal(true)
-    } finally {
-      setIsCheckingAuth(false)
+      console.error('Failed to initialize and connect:', error)
+      // Even if connection fails, allow user to continue (they might not have wallet)
+      setIsInitializing(false)
     }
   }
 
-  const handleFarcasterLogin = async () => {
+  const autoConnect = async () => {
     setIsConnecting(true)
+    
     try {
-      const state = await connectFarcaster()
-      setAuthState(state)
-      setShowLoginModal(false)
-    } catch (error) {
-      console.error('Failed to connect with Farcaster:', error)
-      alert('Failed to connect with Farcaster. Please make sure you are using the app within a Farcaster client.')
-    } finally {
-      setIsConnecting(false)
-    }
-  }
+      // Try Farcaster first (since we're in a Farcaster mini app)
+      setConnectionMessage('Connecting with Farcaster...')
+      try {
+        const state = await connectFarcaster()
+        if (state.connected) {
+          setAuthState(state)
+          setIsConnecting(false)
+          setIsInitializing(false)
+          return
+        }
+      } catch (farcasterError) {
+        console.log('Farcaster connection failed, trying Coinbase:', farcasterError)
+      }
 
-  const handleCoinbaseLogin = async () => {
-    setIsConnecting(true)
-    try {
-      const state = await connectWallet()
-      setAuthState(state)
-      setShowLoginModal(false)
+      // If Farcaster fails, try Coinbase Wallet
+      setConnectionMessage('Connecting wallet...')
+      try {
+        const state = await connectWallet()
+        if (state.connected) {
+          setAuthState(state)
+          setIsConnecting(false)
+          setIsInitializing(false)
+          return
+        }
+      } catch (walletError) {
+        console.log('Wallet connection failed:', walletError)
+      }
+
+      // If both fail, check if we at least have Farcaster context
+      setConnectionMessage('Checking Farcaster account...')
+      try {
+        const context = await sdk.context
+        if (context?.user) {
+          // We have Farcaster context but no wallet - that's okay
+          const state = {
+            fid: context.user.fid,
+            username: context.user.username,
+            address: null,
+            connected: true,
+            loginMethod: 'farcaster',
+            connectedAt: Date.now()
+          }
+          localStorage.setItem('semantle_auth', JSON.stringify(state))
+          setAuthState(state)
+        }
+      } catch (err) {
+        console.log('No Farcaster context available')
+      }
+
     } catch (error) {
-      console.error('Failed to connect wallet:', error)
-      alert('Failed to connect wallet. Please try again.')
+      console.error('Auto-connect failed:', error)
     } finally {
       setIsConnecting(false)
+      setIsInitializing(false)
     }
   }
 
   const handleLogout = () => {
     localStorage.removeItem('semantle_auth')
     setAuthState({ connected: false })
-    setShowLoginModal(true)
     setShowProfileModal(false)
+    // Re-attempt auto-connect after logout
+    initializeAndConnect()
   }
 
-  if (isCheckingAuth) {
+  // Show loading screen while initializing or connecting
+  if (isInitializing || isConnecting) {
     return (
       <div className="App">
-        <div className="loading-screen">
-          <p>Loading...</p>
-        </div>
+        <LoadingScreen message={connectionMessage} />
       </div>
     )
   }
 
   return (
     <div className="App">
-      {showLoginModal && (
-        <LoginModal
-          onFarcasterLogin={handleFarcasterLogin}
-          onCoinbaseLogin={handleCoinbaseLogin}
-          isConnecting={isConnecting}
-        />
-      )}
       <Header 
         onFAQClick={() => setShowFAQModal(true)}
         onProfileClick={() => setShowProfileModal(true)}
