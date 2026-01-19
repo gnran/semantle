@@ -1,0 +1,27 @@
+{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "Semantle",
+    "homeUrl": "https://semantle.vercel.app/",
+    "iconUrl": "https://semantle.vercel.app/favicon1.png",
+    "splashImageUrl": "https://semantle.vercel.app/favicon1.png",
+    "splashBackgroundColor": "#000000",
+    "subtitle": "Semantic word guessing game",
+    "description": "A word guessing game where players guess words based on semantic similarity. Challenge yourself to find the target word using semantic closeness scores.",
+    "screenshotUrls": [
+      "https://semantle.vercel.app/favicon1.png"
+    ],
+    "primaryCategory": "games",
+    "tags": ["word-game", "semantic", "guessing", "puzzle", "miniapp"],
+    "tagline": "Guess words by meaning",
+    "ogTitle": "Semantle - Semantic Word Guessing Game",
+    "ogDescription": "Challenge yourself to find the target word using semantic closeness scores.",
+    "ogImageUrl": "https://semantle.vercel.app/favicon1.png",
+    "noindex": false
+  }
+}
