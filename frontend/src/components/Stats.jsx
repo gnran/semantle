@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { sdk } from '@farcaster/miniapp-sdk'
 import { getUserId } from '../utils/userId'
 import './Stats.css'
 
@@ -15,7 +14,7 @@ if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
   )
 }
 
-function Stats({ userData, userContext }) {
+function Stats({ userData }) {
   const [stats, setStats] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -23,50 +22,46 @@ function Stats({ userData, userContext }) {
 
   useEffect(() => {
     loadStats()
-    loadProfile()
-  }, [userData, userContext])
+    if (userData?.fid) {
+      loadProfile()
+    }
+  }, [userData])
 
   async function loadProfile() {
+    if (!userData?.fid) return
+    
     try {
-      // Get context from SDK
-      const context = userContext || await sdk.context
-      
-      if (context?.user) {
+      // Fetch profile from API using FID
+      const response = await fetch(`https://api.web3.bio/profile/farcaster/${userData.fid}`)
+      if (response.ok) {
+        const data = await response.json()
         setProfile({
-          fid: context.user.fid,
-          username: context.user.username,
-          displayName: context.user.displayName,
-          avatar: context.user.avatarUrl,
-          wallet: context.user.custodyAddress || context.user.verifications?.[0] || null
+          fid: userData.fid,
+          username: data.identity || data.displayName || data.username,
+          displayName: data.displayName,
+          avatar: data.avatar,
+          wallet: data.address
         })
-      } else if (userData?.fid) {
-        // Fallback: fetch profile from API using FID
-        try {
-          const response = await fetch(`https://api.web3.bio/profile/farcaster/${userData.fid}`)
-          if (response.ok) {
-            const data = await response.json()
-            setProfile({
-              fid: userData.fid,
-              username: data.identity || data.displayName,
-              displayName: data.displayName,
-              avatar: data.avatar,
-              wallet: data.address
-            })
-          }
-        } catch (err) {
-          console.error('Failed to fetch profile from API:', err)
-          // Set basic profile with just FID
-          setProfile({
-            fid: userData.fid,
-            username: null,
-            displayName: null,
-            avatar: null,
-            wallet: null
-          })
-        }
+      } else {
+        // If API fails, set basic profile with just FID
+        setProfile({
+          fid: userData.fid,
+          username: null,
+          displayName: null,
+          avatar: null,
+          wallet: null
+        })
       }
     } catch (err) {
-      console.error('Failed to load profile:', err)
+      console.error('Failed to fetch profile from API:', err)
+      // Set basic profile with just FID as fallback
+      setProfile({
+        fid: userData.fid,
+        username: null,
+        displayName: null,
+        avatar: null,
+        wallet: null
+      })
     }
   }
 

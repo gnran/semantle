@@ -13,30 +13,13 @@ function App() {
   const [sessionId, setSessionId] = useState(null)
   const [token, setToken] = useState(null)
   const [userData, setUserData] = useState(null)
-  const [userContext, setUserContext] = useState(null)
   const [isAuthenticating, setIsAuthenticating] = useState(true)
   const [authError, setAuthError] = useState(null)
 
   useEffect(() => {
-    // Authenticate user on mount and get context
+    // Authenticate user on mount
     signIn()
-    getContext()
   }, [])
-
-  async function getContext() {
-    try {
-      // Get context from SDK - this provides user information without authentication
-      // Context might be a promise or a direct property
-      const context = sdk.context instanceof Promise ? await sdk.context : sdk.context
-      setUserContext(context)
-    } catch (error) {
-      console.error('Failed to get context:', error)
-      // Try to get context synchronously if available
-      if (sdk.context && typeof sdk.context === 'object' && !(sdk.context instanceof Promise)) {
-        setUserContext(sdk.context)
-      }
-    }
-  }
 
   async function signIn() {
     setIsAuthenticating(true)
@@ -108,7 +91,7 @@ function App() {
         {currentView === 'game' && (
           <Game sessionId={sessionId} setSessionId={setSessionId} />
         )}
-        {currentView === 'stats' && <Stats userData={userData} userContext={userContext} />}
+        {currentView === 'stats' && <Stats userData={userData} />}
       </main>
     </div>
   )
