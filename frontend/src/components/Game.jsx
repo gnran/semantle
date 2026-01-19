@@ -8,6 +8,14 @@ import './Game.css'
 // Use environment variable for API URL, fallback to '/api' for local development
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
+// Warn in production if API URL is not configured
+if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
+  console.warn(
+    '⚠️ VITE_API_URL is not set! API requests will fail in production. ' +
+    'Please set VITE_API_URL environment variable in Vercel to your Railway backend URL.'
+  )
+}
+
 // Check if debug mode is enabled (via URL parameter or localStorage)
 const isDebugMode = () => {
   const urlParams = new URLSearchParams(window.location.search)

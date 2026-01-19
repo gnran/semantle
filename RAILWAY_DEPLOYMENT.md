@@ -102,20 +102,33 @@ After deployment, Railway will provide you with a URL like:
 
 This is your backend API URL. You'll need this for the frontend configuration.
 
-## Step 4: Update Frontend Configuration
+## Step 4: Update Frontend Configuration ⚠️ **CRITICAL STEP**
+
+**This step is REQUIRED for the frontend to work in production!**
+
+Without this, you'll see errors like:
+- `405 (Method Not Allowed)` when trying to start a game
+- `Failed to start new game` in the UI
+- API requests going to `https://your-vercel-app.vercel.app/api` instead of your Railway backend
 
 1. **In Vercel Dashboard:**
    - Go to your project → **Settings** → **Environment Variables**
+   - Click **"Add New"** or **"Raw Editor"**
    - Add a new variable:
      - **Name:** `VITE_API_URL`
-     - **Value:** `https://your-app.up.railway.app/api`
-   - Make sure to select all environments (Production, Preview, Development)
-   - Redeploy your frontend
+     - **Value:** `https://semantle-production.up.railway.app/api` (replace with your actual Railway URL)
+     - **Important:** Make sure to select all environments:
+       - ✅ Production
+       - ✅ Preview  
+       - ✅ Development
+   - Click **"Save"**
+   - **Redeploy your frontend** (Vercel will prompt you, or go to Deployments → Redeploy)
 
 2. **Or create a `.env.production` file in the `frontend/` directory:**
    ```
-   VITE_API_URL=https://your-app.up.railway.app/api
+   VITE_API_URL=https://semantle-production.up.railway.app/api
    ```
+   (Note: This method requires committing the file, which is less secure. Using Vercel environment variables is recommended.)
 
 ## Step 5: Verify Deployment
 
@@ -173,6 +186,27 @@ This is your backend API URL. You'll need this for the frontend configuration.
 - Check that the service is running in Railway dashboard
 - Verify the Railway URL is correct
 - Check that `VITE_API_URL` in Vercel matches your Railway URL + `/api`
+
+### 405 Method Not Allowed / Failed to Start New Game ⚠️ **COMMON ISSUE**
+
+**Symptoms:**
+- Console shows: `POST https://your-vercel-app.vercel.app/api/game/new 405 (Method Not Allowed)`
+- UI shows: "Failed to start new game"
+- API requests are going to Vercel domain instead of Railway
+
+**Cause:** The `VITE_API_URL` environment variable is not set in Vercel, so the frontend defaults to `/api` which tries to make requests to the Vercel domain (which can't handle API requests).
+
+**Solution:**
+1. Go to Vercel Dashboard → Your Project → **Settings** → **Environment Variables**
+2. Add `VITE_API_URL` with value: `https://semantle-production.up.railway.app/api` (use your actual Railway URL)
+3. Make sure to select **all environments** (Production, Preview, Development)
+4. **Redeploy your frontend** - Vercel will automatically redeploy, or manually trigger a redeploy
+5. After redeploy, the frontend will use the Railway backend URL
+
+**Verify it's working:**
+- Open browser console (F12)
+- Check Network tab - API requests should go to `https://semantle-production.up.railway.app/api/...`
+- Not to `https://your-vercel-app.vercel.app/api/...`
 
 ### Words.json Not Found
 
