@@ -1,8 +1,8 @@
 {
   "accountAssociation": {
-    "header": "",
-    "payload": "",
-    "signature": ""
+    "header": "eyJmaWQiOjIyOTg3NjIsInR5cGUiOiJhdXRoIiwia2V5IjoiMHg4YkYyNjA3YjY2RjlEZmU0MTBCQzQxMUI3MkY4YUEzMzk1QmMyYWUxIn0",
+    "payload": "eyJkb21haW4iOiJzZW1hbnRsZS52ZXJjZWwuYXBwIn0",
+    "signature": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEH2ssEtNASgYkVWb2eKUwQKVTQYn33JK35FsuCbbswZA3aem_2rGoFYk75-0UEXLXRGsjwZ7WYpmPJPjeagEy3BHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
   },
   "miniapp": {
     "version": "1",
@@ -19,7 +19,7 @@
     "primaryCategory": "games",
     "tags": ["word-game", "semantic", "guessing", "puzzle", "miniapp"],
     "tagline": "Guess words by meaning",
-    "ogTitle": "Semantle - Semantic Word Guessing Game",
+    "ogTitle": "Semantle",
     "ogDescription": "Challenge yourself to find the target word using semantic closeness scores.",
     "ogImageUrl": "https://semantle.vercel.app/favicon1.png",
     "noindex": false
