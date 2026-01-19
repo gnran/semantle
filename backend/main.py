@@ -19,6 +19,17 @@ from embeddings_manager import EmbeddingsManager
 
 app = FastAPI(title="Semantle API", version="1.0.0")
 
+@app.on_event("startup")
+async def startup_event():
+    """Log startup completion for Railway health checks"""
+    print("✅ FastAPI application startup complete")
+    print(f"📡 Server is ready to accept connections")
+    
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Log shutdown for debugging"""
+    print("🛑 FastAPI application shutdown initiated")
+
 # CORS middleware for React frontend
 # Get allowed origins from environment variable or use defaults
 origins_str = os.getenv(
@@ -231,6 +242,27 @@ class SaveStatsRequest(BaseModel):
 @app.get("/")
 async def root():
     return {"message": "Semantle API is running"}
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Railway and other load balancers"""
+    try:
+        # Basic health check - verify that core services are initialized
+        # Check if embeddings manager is available (it should be initialized at startup)
+        is_ready = embeddings_manager is not None and game_logic is not None
+        return {
+            "status": "healthy" if is_ready else "starting",
+            "service": "Semantle API",
+            "version": "1.0.0",
+            "ready": is_ready
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "service": "Semantle API",
+            "version": "1.0.0",
+            "error": str(e)
+        }
 
 @app.get("/api")
 async def api_info():
