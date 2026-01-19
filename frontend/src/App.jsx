@@ -13,13 +13,30 @@ function App() {
   const [sessionId, setSessionId] = useState(null)
   const [token, setToken] = useState(null)
   const [userData, setUserData] = useState(null)
+  const [userContext, setUserContext] = useState(null)
   const [isAuthenticating, setIsAuthenticating] = useState(true)
   const [authError, setAuthError] = useState(null)
 
   useEffect(() => {
-    // Authenticate user on mount
+    // Authenticate user on mount and get context
     signIn()
+    getContext()
   }, [])
+
+  async function getContext() {
+    try {
+      // Get context from SDK - this provides user information without authentication
+      // Context might be a promise or a direct property
+      const context = sdk.context instanceof Promise ? await sdk.context : sdk.context
+      setUserContext(context)
+    } catch (error) {
+      console.error('Failed to get context:', error)
+      // Try to get context synchronously if available
+      if (sdk.context && typeof sdk.context === 'object' && !(sdk.context instanceof Promise)) {
+        setUserContext(sdk.context)
+      }
+    }
+  }
 
   async function signIn() {
     setIsAuthenticating(true)
@@ -31,25 +48,12 @@ function App() {
       setToken(authToken)
       
       // Verify token with backend and get user data
-      // Use regular fetch instead of sdk.quickAuth.fetch() since we already have the token
-      const response = await fetch(`${API_BASE}/auth`, {
-        method: 'GET',
-        headers: { 
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+      const response = await sdk.quickAuth.fetch(`${API_BASE}/auth`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
       })
       
       if (!response.ok) {
-        // Try to get error details from response
-        let errorMessage = 'Authentication failed'
-        try {
-          const errorData = await response.json()
-          errorMessage = errorData.detail || errorData.message || errorMessage
-        } catch (e) {
-          errorMessage = `Authentication failed with status ${response.status}`
-        }
-        throw new Error(errorMessage)
+        throw new Error('Authentication failed')
       }
       
       const data = await response.json()
@@ -60,9 +64,7 @@ function App() {
       setIsAuthenticating(false)
     } catch (error) {
       console.error('Authentication failed:', error)
-      // Show the actual error message if available
-      const errorMessage = error.message || 'Failed to authenticate. Please try again.'
-      setAuthError(errorMessage)
+      setAuthError('Failed to authenticate. Please try again.')
       setIsAuthenticating(false)
       // Still call ready() to hide splash screen even if auth fails
       await sdk.actions.ready()
@@ -93,9 +95,6 @@ function App() {
       <div className="loading-screen">
         <div className="loading-content">
           <p className="error-message">{authError}</p>
-          <p style={{ fontSize: '0.9rem', color: '#aaa', marginTop: '0.5rem' }}>
-            Check browser console for details
-          </p>
           <button onClick={signIn} className="retry-button">Retry</button>
         </div>
       </div>
@@ -109,7 +108,7 @@ function App() {
         {currentView === 'game' && (
           <Game sessionId={sessionId} setSessionId={setSessionId} />
         )}
-        {currentView === 'stats' && <Stats userData={userData} />}
+        {currentView === 'stats' && <Stats userData={userData} userContext={userContext} />}
       </main>
     </div>
   )

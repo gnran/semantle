@@ -19,24 +19,6 @@ from embeddings_manager import EmbeddingsManager
 
 app = FastAPI(title="Semantle API", version="1.0.0")
 
-@app.on_event("startup")
-async def startup_event():
-    """Log startup completion for Railway health checks"""
-    import sys
-    print("=" * 60, file=sys.stderr)
-    print("✅ FastAPI application startup complete", file=sys.stderr)
-    print(f"📡 Server is ready to accept connections", file=sys.stderr)
-    print(f"🔍 Health check available at: /health", file=sys.stderr)
-    print(f"🌐 Root endpoint available at: /", file=sys.stderr)
-    print(f"📊 API info available at: /api", file=sys.stderr)
-    print("=" * 60, file=sys.stderr)
-    
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Log shutdown for debugging"""
-    import sys
-    print("🛑 FastAPI application shutdown initiated", file=sys.stderr)
-
 # CORS middleware for React frontend
 # Get allowed origins from environment variable or use defaults
 origins_str = os.getenv(
@@ -62,16 +44,8 @@ app.add_middleware(
 )
 
 # Initialize game logic and embeddings
-# Wrap in try-except to handle initialization errors gracefully
-try:
-    embeddings_manager = EmbeddingsManager()
-    game_logic = GameLogic(embeddings_manager)
-    print("✅ Core services initialized successfully")
-except Exception as e:
-    print(f"❌ Error initializing core services: {e}")
-    print("⚠️  Service will start but may not function correctly")
-    # Raise the error to prevent silent failures
-    raise
+embeddings_manager = EmbeddingsManager()
+game_logic = GameLogic(embeddings_manager)
 
 # Quick Auth configuration
 QUICK_AUTH_ISSUER = "https://auth.farcaster.xyz"
@@ -90,132 +64,43 @@ except Exception as e:
 
 def verify_jwt_token(authorization: str = Header(None)) -> dict:
     """Verify JWT token from Quick Auth and return payload"""
-    import sys
-    print("=" * 50, file=sys.stderr)
-    print("VERIFY_JWT_TOKEN CALLED", file=sys.stderr)
-    print(f"Authorization header present: {authorization is not None}", file=sys.stderr)
-    print(f"APP_DOMAIN: {APP_DOMAIN}", file=sys.stderr)
-    print(f"VERIFY_AUDIENCE: {os.getenv('VERIFY_AUDIENCE', 'true')}", file=sys.stderr)
-    print("=" * 50, file=sys.stderr)
-    
     if not authorization or not authorization.startswith("Bearer "):
-        error_msg = "Unauthorized: Missing or invalid Authorization header"
-        print(f"ERROR: {error_msg}", file=sys.stderr)
-        raise HTTPException(status_code=401, detail=error_msg)
+        raise HTTPException(status_code=401, detail="Unauthorized: Missing or invalid Authorization header")
     
     if not jwks_client:
-        error_msg = "JWT verification service unavailable"
-        print(f"ERROR: {error_msg}", file=sys.stderr)
-        raise HTTPException(status_code=500, detail=error_msg)
+        raise HTTPException(status_code=500, detail="JWT verification service unavailable")
     
     token = authorization.split(" ")[1]
-    print(f"Token extracted (first 20 chars): {token[:20]}...", file=sys.stderr)
     
     try:
         # Get the signing key from JWKS
-        print("Getting signing key from JWKS...", file=sys.stderr)
         signing_key = jwks_client.get_signing_key_from_jwt(token)
-        print("Signing key obtained", file=sys.stderr)
         
         # Verify and decode the JWT
         # Note: For development, you might need to disable audience verification
         # if the token was issued for a different domain
         verify_aud = os.getenv("VERIFY_AUDIENCE", "true").lower() == "true"
         
-        # Try to decode without verification first to see what's in the token
-        try:
-            unverified_payload = jwt.decode(token, options={"verify_signature": False})
-            print(f"Token payload (unverified): {unverified_payload}", file=sys.stderr)
-            print(f"Expected audience: {APP_DOMAIN}", file=sys.stderr)
-            print(f"Token audience: {unverified_payload.get('aud')}", file=sys.stderr)
-            print(f"Token issuer: {unverified_payload.get('iss')}", file=sys.stderr)
-        except Exception as e:
-            print(f"Failed to decode token (unverified): {e}", file=sys.stderr)
+        payload = jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=["ES256", "RS256"],  # Common algorithms for JWTs
+            issuer=QUICK_AUTH_ISSUER,
+            audience=APP_DOMAIN if verify_aud else None,
+            options={
+                "verify_exp": True,
+                "verify_iss": True,
+                "verify_aud": verify_aud
+            }
+        )
         
-        print("Decoding and verifying token...", file=sys.stderr)
-        
-        # Handle audience verification more flexibly
-        # Audience can be a string or array, and might include https:// or not
-        decode_options = {
-            "verify_exp": True,
-            "verify_iss": True,
-            "verify_aud": verify_aud
-        }
-        
-        # If verifying audience, we need to handle it carefully
-        if verify_aud:
-            # Try to decode with audience check
-            # The audience in token might be just domain or full URL
-            try:
-                payload = jwt.decode(
-                    token,
-                    signing_key.key,
-                    algorithms=["ES256", "RS256", "EdDSA"],
-                    issuer=QUICK_AUTH_ISSUER,
-                    audience=APP_DOMAIN,
-                    options=decode_options
-                )
-            except jwt.InvalidAudienceError:
-                # Try with https:// prefix
-                try:
-                    payload = jwt.decode(
-                        token,
-                        signing_key.key,
-                        algorithms=["ES256", "RS256", "EdDSA"],
-                        issuer=QUICK_AUTH_ISSUER,
-                        audience=f"https://{APP_DOMAIN}",
-                        options=decode_options
-                    )
-                    print(f"Token verified with https:// prefix", file=sys.stderr)
-                except jwt.InvalidAudienceError:
-                    # Try without audience verification as last resort
-                    print(f"WARNING: Audience mismatch. Trying without audience verification...", file=sys.stderr)
-                    payload = jwt.decode(
-                        token,
-                        signing_key.key,
-                        algorithms=["ES256", "RS256", "EdDSA"],
-                        issuer=QUICK_AUTH_ISSUER,
-                        options={
-                            "verify_exp": True,
-                            "verify_iss": True,
-                            "verify_aud": False
-                        }
-                    )
-                    print(f"WARNING: Token verified but audience was not checked!", file=sys.stderr)
-        else:
-            payload = jwt.decode(
-                token,
-                signing_key.key,
-                algorithms=["ES256", "RS256", "EdDSA"],
-                issuer=QUICK_AUTH_ISSUER,
-                options=decode_options
-            )
-        
-        print(f"Token verified successfully! Payload: {payload}", file=sys.stderr)
         return payload
     except jwt.ExpiredSignatureError:
-        error_msg = "Token expired"
-        print(f"ERROR: {error_msg}", file=sys.stderr)
-        raise HTTPException(status_code=401, detail=error_msg)
-    except jwt.InvalidAudienceError as e:
-        # This is likely the issue - domain mismatch
-        error_msg = f"Invalid audience. Expected: {APP_DOMAIN}, Got: {str(e)}"
-        print(f"ERROR: {error_msg}", file=sys.stderr)
-        raise HTTPException(status_code=400, detail=error_msg)
-    except jwt.InvalidIssuerError as e:
-        error_msg = f"Invalid issuer. Expected: {QUICK_AUTH_ISSUER}, Got: {str(e)}"
-        print(f"ERROR: {error_msg}", file=sys.stderr)
-        raise HTTPException(status_code=400, detail=error_msg)
+        raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError as e:
-        error_msg = f"Invalid token: {str(e)}"
-        print(f"ERROR: {error_msg}", file=sys.stderr)
-        raise HTTPException(status_code=400, detail=error_msg)
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     except Exception as e:
-        error_msg = f"Token verification failed: {str(e)}"
-        print(f"ERROR: {error_msg}", file=sys.stderr)
-        import traceback
-        traceback.print_exc(file=sys.stderr)
-        raise HTTPException(status_code=500, detail=error_msg)
+        raise HTTPException(status_code=500, detail=f"Token verification failed: {str(e)}")
 
 # Request/Response models
 class GuessRequest(BaseModel):
@@ -257,17 +142,6 @@ class SaveStatsRequest(BaseModel):
 @app.get("/")
 async def root():
     return {"message": "Semantle API is running"}
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint for Railway and other load balancers"""
-    # Simple, fast health check that always returns 200
-    # Railway needs this to verify the service is running
-    return {
-        "status": "healthy",
-        "service": "Semantle API",
-        "version": "1.0.0"
-    }
 
 @app.get("/api")
 async def api_info():
@@ -367,34 +241,11 @@ async def validate_word(word: str):
 @app.get("/api/auth")
 async def authenticate_user(payload: dict = Depends(verify_jwt_token)):
     """Authenticate user using Quick Auth JWT token"""
-    import sys
-    print("=" * 50, file=sys.stderr)
-    print("AUTH ENDPOINT CALLED", file=sys.stderr)
-    print(f"Payload received: {payload}", file=sys.stderr)
-    print("=" * 50, file=sys.stderr)
-    
-    try:
-        # Return the FID (Farcaster ID) from the token payload
-        fid = payload.get("sub")
-        if not fid:
-            error_msg = f"FID not found in payload. Payload: {payload}"
-            print(f"ERROR: {error_msg}", file=sys.stderr)
-            raise HTTPException(status_code=400, detail=error_msg)
-        
-        print(f"SUCCESS: Authentication successful for FID: {fid}", file=sys.stderr)
-        return {
-            "fid": fid,
-            "authenticated": True
-        }
-    except HTTPException as e:
-        print(f"HTTPException raised: {e.status_code} - {e.detail}", file=sys.stderr)
-        raise
-    except Exception as e:
-        error_msg = f"Authentication error: {str(e)}"
-        print(f"EXCEPTION: {error_msg}", file=sys.stderr)
-        import traceback
-        traceback.print_exc(file=sys.stderr)
-        raise HTTPException(status_code=500, detail=error_msg)
+    # Return the FID (Farcaster ID) from the token payload
+    return {
+        "fid": payload.get("sub"),
+        "authenticated": True
+    }
 
 if __name__ == "__main__":
     import uvicorn
