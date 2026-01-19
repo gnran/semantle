@@ -121,7 +121,7 @@ def verify_jwt_token(authorization: str = Header(None)) -> dict:
     except Exception as e:
         error_msg = f"Token verification failed: {str(e)}"
         print(f"Unexpected error during token verification: {error_msg}")
-        raise HTTPException(status_code=500, detail=error_msg) HTTPException(status_code=500, detail=f"Token verification failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=error_msg)
 
 # Request/Response models
 class GuessRequest(BaseModel):
