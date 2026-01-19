@@ -1,7 +1,7 @@
 .game-info {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 2px solid var(--border-color);
 }
 
 .info-header {
@@ -13,11 +13,11 @@
 
 .info-header h2 {
   font-size: 1.8rem;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .completed-badge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--accent-gradient);
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 20px;
@@ -49,18 +49,18 @@
 
 .stat-label {
   font-size: 0.9rem;
-  color: #aaa;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .stat-value {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .target-word {
-  color: #667eea;
+  color: var(--accent-color);
   text-transform: uppercase;
 }
 
@@ -71,7 +71,7 @@
 }
 
 .game-instructions {
-  color: #aaa;
+  color: var(--text-secondary);
   font-size: 0.95rem;
   line-height: 1.6;
   margin-top: 1rem;

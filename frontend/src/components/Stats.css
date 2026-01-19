@@ -5,19 +5,20 @@
 }
 
 .stats-card {
-  background: #1a1a1a;
+  background: var(--card-bg);
   border-radius: 16px;
   padding: 2rem;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   width: 100%;
   max-width: 900px;
-  color: #fff;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
 }
 
 .stats-card h2 {
   font-size: 2rem;
   margin-bottom: 2rem;
-  color: #fff;
+  color: var(--text-primary);
   text-align: center;
 }
 
@@ -29,7 +30,7 @@
 }
 
 .stat-box {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--accent-gradient);
   color: white;
   padding: 2rem;
   border-radius: 12px;
@@ -57,7 +58,7 @@
 .games-history h3 {
   font-size: 1.5rem;
   margin-bottom: 1rem;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .history-list {
@@ -73,19 +74,20 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--card-bg);
   border-radius: 8px;
-  border-left: 4px solid #444;
+  border-left: 4px solid var(--border-color);
   transition: all 0.2s;
+  border: 1px solid var(--border-color);
 }
 
 .history-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--hover-bg);
   transform: translateX(4px);
 }
 
 .history-item.completed {
-  border-left-color: #667eea;
+  border-left-color: var(--accent-color);
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
 }
 
@@ -96,7 +98,7 @@
 .history-word {
   font-size: 1.2rem;
   font-weight: bold;
-  color: #fff;
+  color: var(--text-primary);
   text-transform: uppercase;
   min-width: 150px;
 }
@@ -108,12 +110,12 @@
 }
 
 .history-attempts {
-  color: #aaa;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
 .daily-badge {
-  background: #667eea;
+  background: var(--accent-color);
   color: white;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
@@ -131,13 +133,13 @@
 }
 
 .history-date {
-  color: #999;
+  color: var(--text-secondary);
   font-size: 0.85rem;
 }
 
 .no-history {
   text-align: center;
-  color: #999;
+  color: var(--text-secondary);
   font-style: italic;
   padding: 2rem;
 }

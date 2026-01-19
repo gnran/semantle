@@ -2,6 +2,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: var(--bg-primary);
 }
 
 .main-content {
@@ -20,13 +21,13 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #1a1a1a;
-  color: #fff;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .loading-screen p {
   font-size: 1.2rem;
-  color: #aaa;
+  color: var(--text-secondary);
 }
 
 @media (max-width: 768px) {

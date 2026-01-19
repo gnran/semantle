@@ -10,16 +10,21 @@
   align-items: center;
   z-index: 1000;
   padding: 1rem;
+  backdrop-filter: blur(4px);
+}
+
+[data-theme="light"] .login-modal-overlay {
+  background: rgba(0, 0, 0, 0.5);
 }
 
 .login-modal {
-  background: rgba(26, 26, 26, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--modal-bg);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 2rem;
   max-width: 500px;
   width: 100%;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   animation: slideIn 0.3s ease-out;
 }
 
@@ -42,14 +47,14 @@
 .login-modal-header h2 {
   font-size: 2rem;
   margin: 0 0 0.5rem 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--accent-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .login-modal-header p {
-  color: #aaa;
+  color: var(--text-secondary);
   margin: 0;
   font-size: 0.95rem;
 }
@@ -66,8 +71,8 @@
   align-items: center;
   gap: 1rem;
   padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -76,8 +81,8 @@
 }
 
 .login-option:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--hover-bg);
+  border-color: var(--accent-color);
   transform: translateY(-2px);
 }
 
@@ -108,17 +113,17 @@
 .login-option-content h3 {
   margin: 0 0 0.25rem 0;
   font-size: 1.25rem;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .login-option-content p {
   margin: 0;
-  color: #aaa;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
 .login-option-loading {
-  color: #667eea;
+  color: var(--accent-color);
   font-size: 1.5rem;
   animation: pulse 1.5s ease-in-out infinite;
 }
@@ -135,11 +140,11 @@
 .login-modal-footer {
   text-align: center;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-color);
 }
 
 .login-info {
-  color: #888;
+  color: var(--text-secondary);
   font-size: 0.85rem;
   margin: 0;
 }

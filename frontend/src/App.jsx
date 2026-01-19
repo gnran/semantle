@@ -4,6 +4,8 @@ import Game from './components/Game'
 import Stats from './components/Stats'
 import Header from './components/Header'
 import LoginModal from './components/LoginModal'
+import FAQModal from './components/FAQModal'
+import ProfileModal from './components/ProfileModal'
 import { initializeAuth, getAuthState, connectWallet, connectFarcaster, isAuthenticated } from './utils/auth'
 import './App.css'
 
@@ -13,6 +15,8 @@ function App() {
   const [authState, setAuthState] = useState({ connected: false })
   const [isConnecting, setIsConnecting] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showFAQModal, setShowFAQModal] = useState(false)
+  const [showProfileModal, setShowProfileModal] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
 
   useEffect(() => {
@@ -77,6 +81,7 @@ function App() {
     localStorage.removeItem('semantle_auth')
     setAuthState({ connected: false })
     setShowLoginModal(true)
+    setShowProfileModal(false)
   }
 
   if (isCheckingAuth) {
@@ -99,8 +104,16 @@ function App() {
         />
       )}
       <Header 
-        currentView={currentView} 
-        setCurrentView={setCurrentView}
+        onFAQClick={() => setShowFAQModal(true)}
+        onProfileClick={() => setShowProfileModal(true)}
+      />
+      <FAQModal 
+        isOpen={showFAQModal}
+        onClose={() => setShowFAQModal(false)}
+      />
+      <ProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
         authState={authState}
         onLogout={handleLogout}
       />

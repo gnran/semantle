@@ -1,11 +1,12 @@
 .header {
-  background: rgba(26, 26, 26, 0.95);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  background: var(--header-bg);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   padding: 1rem 2rem;
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
 }
 
 .header-content {
@@ -16,159 +17,73 @@
   align-items: center;
 }
 
-.logo {
-  font-size: 2rem;
-  font-weight: bold;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  cursor: pointer;
-  user-select: none;
+.header-left {
+  flex: 1;
 }
 
-.nav {
+.header-center {
+  flex: 1;
   display: flex;
-  gap: 1rem;
+  justify-content: center;
 }
 
-.nav-button {
-  padding: 0.5rem 1.5rem;
-  border: none;
-  background: transparent;
-  color: #aaa;
-  font-size: 1rem;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.nav-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
-
-.nav-button.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.wallet-section {
+.header-right {
+  flex: 1;
   display: flex;
+  justify-content: flex-end;
   align-items: center;
   gap: 0.5rem;
 }
 
-.connect-wallet-button {
-  padding: 0.5rem 1rem;
-  border: 1px solid rgba(102, 126, 234, 0.5);
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
-  font-size: 0.9rem;
+.header-icon-button {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
   cursor: pointer;
+  padding: 0.5rem;
   border-radius: 8px;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-}
-
-.connect-wallet-button:hover:not(:disabled) {
-  background: rgba(102, 126, 234, 0.2);
-  border-color: #667eea;
-}
-
-.connect-wallet-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.wallet-connected {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.2rem;
-}
-
-.wallet-address {
-  font-size: 0.85rem;
-  color: #667eea;
-  font-family: 'Courier New', monospace;
-  font-weight: 600;
-}
-
-.wallet-username {
-  font-size: 0.75rem;
-  color: #aaa;
-}
-
-.login-method-badge {
-  font-size: 0.7rem;
-  color: #888;
-  padding: 0.1rem 0.4rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
-  margin-top: 0.1rem;
-}
-
-.logout-button {
-  padding: 0.3rem 0.8rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
-  color: #aaa;
-  font-size: 0.75rem;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  margin-top: 0.3rem;
-}
-
-.logout-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.wallet-disconnected {
   display: flex;
   align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  width: 36px;
+  height: 36px;
 }
 
-.not-connected {
-  font-size: 0.85rem;
-  color: #888;
-  font-style: italic;
+.header-icon-button:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.header-icon-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.header-separator {
+  width: 1px;
+  height: 24px;
+  background: var(--border-color);
+  margin: 0 0.25rem;
+}
+
+.theme-toggle {
+  margin-right: 0.25rem;
 }
 
 @media (max-width: 768px) {
   .header {
     padding: 1rem;
   }
-  
-  .logo {
-    font-size: 1.5rem;
-  }
-  
-  .nav-button {
-    padding: 0.4rem 1rem;
-    font-size: 0.9rem;
+
+  .header-icon-button {
+    width: 32px;
+    height: 32px;
+    padding: 0.4rem;
   }
 
-  .header-content {
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-
-  .wallet-section {
-    width: 100%;
-    justify-content: flex-end;
-    order: 3;
-  }
-
-  .connect-wallet-button {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.85rem;
-  }
-
-  .wallet-connected {
-    align-items: flex-end;
+  .header-icon-button svg {
+    width: 18px;
+    height: 18px;
   }
 }

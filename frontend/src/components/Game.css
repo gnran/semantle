@@ -5,13 +5,14 @@
 }
 
 .game-card {
-  background: #1a1a1a;
+  background: var(--card-bg);
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   width: 100%;
   max-width: 900px;
-  color: #fff;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
 }
 
 .error-message {
@@ -27,7 +28,7 @@
 .game-completed {
   text-align: center;
   padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--accent-gradient);
   color: white;
   border-radius: 12px;
   margin: 1.5rem 0;
@@ -58,14 +59,16 @@
   font-weight: bold;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  background: white;
-  color: #667eea;
+  background: var(--bg-secondary);
+  color: var(--accent-color);
+  border: 1px solid var(--border-color);
 }
 
 .new-game-button:hover,
 .daily-game-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: var(--hover-bg);
 }
 
 @media (max-width: 768px) {
