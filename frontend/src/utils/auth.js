@@ -46,7 +46,7 @@ export function initializeAuth() {
 
 /**
  * Connect with Farcaster only (no wallet required)
- * @returns {Promise<{fid: number, username?: string, connected: boolean}>}
+ * @returns {Promise<{fid: number, username?: string, address?: string, connected: boolean}>}
  */
 export async function connectFarcaster() {
   try {
@@ -59,12 +59,44 @@ export async function connectFarcaster() {
 
     const fid = context.user.fid
     const username = context.user.username || null
+    
+    // Try to get wallet address from Farcaster context
+    // Check for custodyAddress, verifiedAddresses, or walletAddress fields
+    let address = null
+    if (context.user.custodyAddress) {
+      address = context.user.custodyAddress
+    } else if (context.user.verifiedAddresses && context.user.verifiedAddresses.length > 0) {
+      // Use first verified address if custody address is not available
+      address = context.user.verifiedAddresses[0]
+    } else if (context.user.walletAddress) {
+      address = context.user.walletAddress
+    }
+    
+    // Also try to get wallet address from Base Account SDK if available
+    if (!address) {
+      try {
+        // Initialize SDK if not already done
+        if (!isInitialized) {
+          initializeAuth()
+        }
+        
+        if (provider) {
+          const accounts = await provider.request({ method: 'eth_accounts' })
+          if (accounts && accounts.length > 0) {
+            address = accounts[0]
+          }
+        }
+      } catch (err) {
+        // Wallet not connected, that's okay for Farcaster-only login
+        console.log('No wallet connected via Base Account SDK')
+      }
+    }
 
     // Store auth state
     const authState = {
       fid,
       username,
-      address: null,
+      address: address || null,
       connected: true,
       loginMethod: 'farcaster',
       connectedAt: Date.now()
@@ -164,6 +196,39 @@ export async function getAuthState() {
           if (context?.user && context.user.fid === authState.fid) {
             // Update username if available
             authState.username = context.user.username || authState.username
+            
+            // Try to get/update wallet address from Farcaster context
+            let address = null
+            if (context.user.custodyAddress) {
+              address = context.user.custodyAddress
+            } else if (context.user.verifiedAddresses && context.user.verifiedAddresses.length > 0) {
+              address = context.user.verifiedAddresses[0]
+            } else if (context.user.walletAddress) {
+              address = context.user.walletAddress
+            }
+            
+            // Also try to get wallet address from Base Account SDK if not found
+            if (!address) {
+              try {
+                if (!isInitialized) {
+                  initializeAuth()
+                }
+                if (provider) {
+                  const accounts = await provider.request({ method: 'eth_accounts' })
+                  if (accounts && accounts.length > 0) {
+                    address = accounts[0]
+                  }
+                }
+              } catch (err) {
+                // Wallet not connected, that's okay
+              }
+            }
+            
+            // Update address if found
+            if (address && address !== authState.address) {
+              authState.address = address
+            }
+            
             localStorage.setItem('semantle_auth', JSON.stringify(authState))
             return { ...authState, connected: true }
           } else {
