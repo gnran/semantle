@@ -52,8 +52,10 @@ The backend is located in the `backend/` directory. Make sure you have:
      ```
    - **Important:**
      - Replace `your-openai-api-key-here` with your actual OpenAI API key (starts with `sk-`)
-     - Replace `https://your-app.vercel.app` with your Vercel frontend URL (or leave as `http://localhost:3000` for testing)
-     - Make sure there are **no spaces** around the `=` sign
+     - Replace `https://your-app.vercel.app` with your **actual Vercel frontend URL** (e.g., `https://semantle.vercel.app`)
+     - **CRITICAL:** The Vercel URL in `ALLOWED_ORIGINS` must match exactly (including `https://` and no trailing slash)
+     - You can include multiple origins separated by commas: `https://semantle.vercel.app,http://localhost:3000`
+     - Make sure there are **no spaces** around the `=` sign or between URLs
      - After adding variables, Railway will automatically redeploy
    - **Get your OpenAI API key:**
      - Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
@@ -207,6 +209,44 @@ Without this, you'll see errors like:
 - Open browser console (F12)
 - Check Network tab - API requests should go to `https://semantle-production.up.railway.app/api/...`
 - Not to `https://your-vercel-app.vercel.app/api/...`
+
+### 400 Bad Request on OPTIONS Requests (CORS Preflight) ⚠️ **COMMON ISSUE**
+
+**Symptoms:**
+- Railway logs show: `"OPTIONS /api/game/new?debug=false HTTP/1.1" 400 Bad Request`
+- Browser console shows CORS errors
+- Frontend can't make API requests to Railway backend
+
+**Cause:** The `ALLOWED_ORIGINS` environment variable in Railway either:
+- Doesn't include your Vercel frontend URL
+- Has formatting issues (spaces, wrong URL format)
+- Is missing entirely
+
+**Solution:**
+1. Go to Railway Dashboard → Your Service → **Variables** tab
+2. Check if `ALLOWED_ORIGINS` exists and includes your Vercel URL
+3. Update or add `ALLOWED_ORIGINS` with the correct format:
+   ```
+   ALLOWED_ORIGINS=https://semantle.vercel.app,http://localhost:3000
+   ```
+   - **Important:** 
+     - Use your **exact Vercel frontend URL** (e.g., `https://semantle.vercel.app`)
+     - Include `https://` protocol
+     - No trailing slash
+     - No spaces around commas or `=`
+     - Multiple origins separated by commas (no spaces)
+4. Railway will automatically redeploy after saving
+5. Wait for redeploy to complete and test again
+
+**Verify it's working:**
+- Check Railway logs - OPTIONS requests should return `200 OK` instead of `400 Bad Request`
+- Browser console should no longer show CORS errors
+- Frontend should be able to make API requests successfully
+
+**Example of correct format:**
+```
+ALLOWED_ORIGINS=https://semantle.vercel.app,http://localhost:3000,http://localhost:5173
+```
 
 ### Words.json Not Found
 

@@ -19,10 +19,18 @@ app = FastAPI(title="Semantle API", version="1.0.0")
 
 # CORS middleware for React frontend
 # Get allowed origins from environment variable or use defaults
-allowed_origins = os.getenv(
+origins_str = os.getenv(
     "ALLOWED_ORIGINS",
     "http://localhost:3000,http://localhost:5173"
-).split(",")
+)
+# Split, strip whitespace, and filter out empty strings
+allowed_origins = [origin.strip() for origin in origins_str.split(",") if origin.strip()]
+
+# Log allowed origins for debugging (don't log in production with sensitive data)
+if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY"):
+    print(f"CORS: Configured {len(allowed_origins)} allowed origin(s)")
+else:
+    print(f"CORS: Allowed origins: {allowed_origins}")
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,6 +38,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Initialize game logic and embeddings
@@ -64,6 +73,14 @@ class StatsResponse(BaseModel):
 
 class NewGameRequest(BaseModel):
     daily: bool = False
+
+class SaveStatsRequest(BaseModel):
+    user_id: str
+    session_id: str
+    target_word: str
+    attempts: int
+    completed: bool
+    daily_word: bool
 
 @app.get("/")
 async def root():
@@ -140,10 +157,23 @@ async def get_session(session_id: str, debug: bool = False):
     )
 
 @app.get("/api/stats/{user_id}", response_model=StatsResponse)
-async def get_stats(user_id: str = "default"):
+async def get_stats(user_id: str):
     """Get user statistics"""
     stats = game_logic.get_user_stats(user_id)
     return StatsResponse(**stats)
+
+@app.post("/api/stats/save")
+async def save_stats(request: SaveStatsRequest):
+    """Save game statistics for a user"""
+    game_logic.save_user_game_stats(
+        user_id=request.user_id,
+        session_id=request.session_id,
+        target_word=request.target_word,
+        attempts=request.attempts,
+        completed=request.completed,
+        daily_word=request.daily_word
+    )
+    return {"message": "Stats saved successfully"}
 
 @app.get("/api/words/validate/{word}")
 async def validate_word(word: str):

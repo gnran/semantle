@@ -155,7 +155,7 @@ class GameLogic:
         
         if is_correct:
             session.is_completed = True
-            self._save_game_stats(session)
+            # Stats will be saved by frontend with user_id
         
         return {
             "similarity": similarity,
@@ -163,10 +163,8 @@ class GameLogic:
             "is_correct": is_correct
         }
 
-    def _save_game_stats(self, session: GameSession):
+    def _save_game_stats(self, session: GameSession, user_id: str = "default"):
         """Save game statistics"""
-        user_id = "default"  # In production, use actual user ID
-        
         stats = self._load_stats()
         
         if user_id not in stats:
@@ -190,6 +188,42 @@ class GameLogic:
             "completed": session.is_completed,
             "daily_word": session.daily_word,
             "date": session.created_at
+        }
+        stats[user_id]["games_history"].append(game_record)
+        
+        # Keep only last 100 games
+        stats[user_id]["games_history"] = stats[user_id]["games_history"][-100:]
+        
+        # Save to file
+        with open(self.stats_file, 'w', encoding='utf-8') as f:
+            json.dump(stats, f, indent=2)
+    
+    def save_user_game_stats(self, user_id: str, session_id: str, target_word: str, 
+                            attempts: int, completed: bool, daily_word: bool):
+        """Save game statistics for a specific user"""
+        stats = self._load_stats()
+        
+        if user_id not in stats:
+            stats[user_id] = {
+                "total_games": 0,
+                "completed_games": 0,
+                "total_attempts": 0,
+                "games_history": []
+            }
+        
+        stats[user_id]["total_games"] += 1
+        if completed:
+            stats[user_id]["completed_games"] += 1
+            stats[user_id]["total_attempts"] += attempts
+        
+        # Add to history
+        game_record = {
+            "session_id": session_id,
+            "target_word": target_word,
+            "attempts": attempts,
+            "completed": completed,
+            "daily_word": daily_word,
+            "date": datetime.now().isoformat()
         }
         stats[user_id]["games_history"].append(game_record)
         

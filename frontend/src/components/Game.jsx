@@ -3,6 +3,7 @@ import axios from 'axios'
 import GuessInput from './GuessInput'
 import GuessList from './GuessList'
 import GameInfo from './GameInfo'
+import { getUserId } from '../utils/userId'
 import './Game.css'
 
 // Use environment variable for API URL, fallback to '/api' for local development
@@ -24,6 +25,10 @@ const isDebugMode = () => {
   return urlDebug || storageDebug
 }
 
+// LocalStorage keys for game state persistence
+const GAME_STATE_KEY = 'semantle_game_state'
+const GAME_SESSION_KEY = 'semantle_game_session'
+
 function Game({ sessionId, setSessionId }) {
   const [gameSession, setGameSession] = useState(null)
   const [guesses, setGuesses] = useState([])
@@ -31,6 +36,23 @@ function Game({ sessionId, setSessionId }) {
   const [error, setError] = useState(null)
   const [isDaily, setIsDaily] = useState(false)
   const [debugMode, setDebugMode] = useState(isDebugMode())
+
+  const saveGameState = (session, guessesList) => {
+    try {
+      localStorage.setItem(GAME_STATE_KEY, JSON.stringify({
+        guesses: guessesList,
+        timestamp: Date.now()
+      }))
+      localStorage.setItem(GAME_SESSION_KEY, JSON.stringify(session))
+    } catch (err) {
+      console.error('Error saving game state:', err)
+    }
+  }
+
+  const clearGameState = () => {
+    localStorage.removeItem(GAME_STATE_KEY)
+    localStorage.removeItem(GAME_SESSION_KEY)
+  }
 
   useEffect(() => {
     // Check URL for debug parameter and save to localStorage for persistence
@@ -43,11 +65,57 @@ function Game({ sessionId, setSessionId }) {
       if (debugMode) setDebugMode(false)
     }
     
-    startNewGame(false)
+    // Try to restore game state from localStorage
+    const restoreGameState = async () => {
+      const savedGameState = localStorage.getItem(GAME_STATE_KEY)
+      const savedSession = localStorage.getItem(GAME_SESSION_KEY)
+      
+      if (savedGameState && savedSession) {
+        try {
+          const gameState = JSON.parse(savedGameState)
+          const session = JSON.parse(savedSession)
+          
+          // Only restore if game is not completed
+          if (!session.is_completed) {
+            // Verify session still exists on backend
+            try {
+              const sessionResponse = await axios.get(
+                `${API_BASE}/game/${session.session_id}?debug=${debugMode}`
+              )
+              // Session exists, restore state
+              setGameSession(sessionResponse.data)
+              setSessionId(session.session_id)
+              setGuesses(gameState.guesses || [])
+              setIsDaily(session.daily_word || false)
+              return
+            } catch (err) {
+              // Session doesn't exist on backend, clear saved state
+              console.log('Session not found on backend, clearing saved state')
+              clearGameState()
+            }
+          } else {
+            // Game was completed, clear saved state
+            clearGameState()
+          }
+        } catch (err) {
+          console.error('Error restoring game state:', err)
+          // If restoration fails, clear invalid state and start new game
+          clearGameState()
+        }
+      }
+      
+      // No saved state or game was completed, start new game
+      startNewGame(false)
+    }
+    
+    restoreGameState()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const startNewGame = async (daily = false) => {
+    // Clear previous game state
+    clearGameState()
+    
     setIsLoading(true)
     setError(null)
     try {
@@ -94,6 +162,9 @@ function Game({ sessionId, setSessionId }) {
       setSessionId(response.data.session_id)
       setGuesses(response.data.attempts || [])
       setIsDaily(response.data.daily_word)
+      
+      // Save game state to localStorage
+      saveGameState(response.data, response.data.attempts || [])
     } catch (err) {
       // #region agent log
       const logData3 = {
@@ -150,17 +221,41 @@ function Game({ sessionId, setSessionId }) {
       setGuesses(updatedGuesses)
 
       // Update game session
+      let updatedSession
       if (response.data.is_correct) {
         const sessionResponse = await axios.get(
           `${API_BASE}/game/${gameSession.session_id}?debug=${debugMode}`
         )
-        setGameSession(sessionResponse.data)
+        updatedSession = sessionResponse.data
+        setGameSession(updatedSession)
+        
+        // Game completed - clear saved state and save stats with user ID
+        clearGameState()
+        
+        // Save stats with user ID
+        const userId = getUserId()
+        try {
+          await axios.post(`${API_BASE}/stats/save`, {
+            user_id: userId,
+            session_id: gameSession.session_id,
+            target_word: updatedSession.target_word,
+            attempts: updatedGuesses.length,
+            completed: true,
+            daily_word: updatedSession.daily_word
+          })
+        } catch (err) {
+          console.error('Error saving stats:', err)
+        }
       } else {
         // Update session attempts count
-        setGameSession({
+        updatedSession = {
           ...gameSession,
           attempts: updatedGuesses
-        })
+        }
+        setGameSession(updatedSession)
+        
+        // Save updated state
+        saveGameState(updatedSession, updatedGuesses)
       }
     } catch (err) {
       if (err.response?.status === 400) {
