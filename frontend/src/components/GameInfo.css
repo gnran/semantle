@@ -12,7 +12,7 @@
 }
 
 .info-header h2 {
-  font-size: 1.8rem;
+  font-size: 1.2rem;
   color: var(--text-primary);
 }
 
@@ -48,13 +48,13 @@
 }
 
 .stat-label {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   font-weight: 500;
 }
 
 .stat-value {
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   font-weight: bold;
   color: var(--text-primary);
 }
@@ -72,14 +72,14 @@
 
 .game-instructions {
   color: var(--text-secondary);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   line-height: 1.6;
   margin-top: 1rem;
 }
 
 @media (max-width: 768px) {
   .info-header h2 {
-    font-size: 1.5rem;
+    font-size: 1.1rem;
   }
   
   .info-stats {

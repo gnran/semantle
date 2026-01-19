@@ -77,12 +77,22 @@ function ProfileModal({ isOpen, onClose, authState, onLogout }) {
                   </span>
                 </div>
 
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Wallet Address:</span>
-                  <span className="profile-info-value" title={authState.address}>
-                    {formatAddress(authState.address)}
-                  </span>
-                </div>
+                {authState.loginMethod === 'coinbase' && (
+                  <div className="profile-info-item">
+                    <span className="profile-info-label">Wallet Address:</span>
+                    <span className="profile-info-value" title={authState.address}>
+                      {formatAddress(authState.address)}
+                    </span>
+                  </div>
+                )}
+                {authState.loginMethod === 'farcaster' && !authState.address && (
+                  <div className="profile-info-item">
+                    <span className="profile-info-label">Wallet Address:</span>
+                    <span className="profile-info-value">
+                      Not connected (Farcaster only)
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="profile-stats-section">

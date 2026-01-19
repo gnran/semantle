@@ -5,7 +5,7 @@ function GameInfo({ isDaily, isCompleted, attempts, targetWord, debugMode = fals
   return (
     <div className="game-info">
       <div className="info-header">
-        <h2>{isDaily ? '📅 Daily Challenge' : '🎮 New Game'}</h2>
+        <h2>{isDaily ? '📅 Daily Challenge' : 'New Game'}</h2>
         {isCompleted && (
           <div className="completed-badge">Completed!</div>
         )}
