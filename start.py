@@ -44,23 +44,40 @@ def signal_handler(sig, frame):
     cleanup()
     sys.exit(0)
 
+def is_production_environment():
+    """Check if running in production/deployment environment (Railway, Heroku, etc.)"""
+    # Railway sets PORT and RAILWAY_ENVIRONMENT
+    # Heroku sets PORT and DYNO
+    # Other platforms typically set PORT
+    # In production, VIRTUAL_ENV is typically not set
+    return (
+        os.getenv("RAILWAY_ENVIRONMENT") is not None or
+        os.getenv("DYNO") is not None or
+        (os.getenv("PORT") is not None and os.getenv("VIRTUAL_ENV") is None)
+    )
+
 def check_dependencies():
     """Check if required dependencies are installed"""
-    # Check if backend venv exists
-    venv_python = BACKEND_DIR / "venv" / "Scripts" / "python.exe" if sys.platform == "win32" else BACKEND_DIR / "venv" / "bin" / "python"
+    # In production environments (Railway, Heroku, etc.), venv is not used
+    # Dependencies are installed globally
+    is_prod = is_production_environment()
     
-    if not venv_python.exists():
-        print("❌ Backend virtual environment not found!")
-        print("Please run the setup first:")
-        print("  cd backend")
-        print("  python -m venv venv")
-        print("  venv\\Scripts\\activate  (Windows)")
-        print("  source venv/bin/activate  (Linux/Mac)")
-        print("  pip install -r requirements.txt")
-        return False
+    if not is_prod:
+        # Check if backend venv exists (local development only)
+        venv_python = BACKEND_DIR / "venv" / "Scripts" / "python.exe" if sys.platform == "win32" else BACKEND_DIR / "venv" / "bin" / "python"
+        
+        if not venv_python.exists():
+            print("❌ Backend virtual environment not found!")
+            print("Please run the setup first:")
+            print("  cd backend")
+            print("  python -m venv venv")
+            print("  venv\\Scripts\\activate  (Windows)")
+            print("  source venv/bin/activate  (Linux/Mac)")
+            print("  pip install -r requirements.txt")
+            return False
     
-    # Check if frontend node_modules exists
-    if not (FRONTEND_DIR / "node_modules").exists():
+    # Check if frontend node_modules exists (only for local development)
+    if not is_prod and not (FRONTEND_DIR / "node_modules").exists():
         print("❌ Frontend dependencies not installed!")
         print("Please run: cd frontend && npm install")
         return False
@@ -81,14 +98,21 @@ def start_backend():
     print("🚀 Starting backend server...")
     
     # Determine Python executable
-    if sys.platform == "win32":
-        python_exe = BACKEND_DIR / "venv" / "Scripts" / "python.exe"
-    else:
-        python_exe = BACKEND_DIR / "venv" / "bin" / "python"
+    is_prod = is_production_environment()
     
-    if not python_exe.exists():
-        print(f"❌ Python executable not found at {python_exe}")
-        return None
+    if is_prod:
+        # In production, use system Python (Railway/Heroku install dependencies globally)
+        python_exe = sys.executable
+    else:
+        # In local development, use venv Python
+        if sys.platform == "win32":
+            python_exe = BACKEND_DIR / "venv" / "Scripts" / "python.exe"
+        else:
+            python_exe = BACKEND_DIR / "venv" / "bin" / "python"
+        
+        if not python_exe.exists():
+            print(f"❌ Python executable not found at {python_exe}")
+            return None
     
     try:
         # Start backend with output visible
