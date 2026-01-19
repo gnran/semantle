@@ -36,7 +36,15 @@ function App() {
       })
       
       if (!response.ok) {
-        throw new Error('Authentication failed')
+        // Try to get error details from response
+        let errorMessage = 'Authentication failed'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.detail || errorData.message || errorMessage
+        } catch (e) {
+          errorMessage = `Authentication failed with status ${response.status}`
+        }
+        throw new Error(errorMessage)
       }
       
       const data = await response.json()

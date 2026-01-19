@@ -81,10 +81,18 @@ def verify_jwt_token(authorization: str = Header(None)) -> dict:
         # if the token was issued for a different domain
         verify_aud = os.getenv("VERIFY_AUDIENCE", "true").lower() == "true"
         
+        # Try to decode without verification first to see what's in the token
+        try:
+            unverified_payload = jwt.decode(token, options={"verify_signature": False})
+            print(f"Token payload (unverified): {unverified_payload}")
+            print(f"Expected audience: {APP_DOMAIN}, Token audience: {unverified_payload.get('aud')}")
+        except Exception as e:
+            print(f"Failed to decode token (unverified): {e}")
+        
         payload = jwt.decode(
             token,
             signing_key.key,
-            algorithms=["ES256", "RS256"],  # Common algorithms for JWTs
+            algorithms=["ES256", "RS256", "EdDSA"],  # Added EdDSA as it's commonly used
             issuer=QUICK_AUTH_ISSUER,
             audience=APP_DOMAIN if verify_aud else None,
             options={
@@ -97,10 +105,23 @@ def verify_jwt_token(authorization: str = Header(None)) -> dict:
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidAudienceError as e:
+        # This is likely the issue - domain mismatch
+        error_msg = f"Invalid audience. Expected: {APP_DOMAIN}, Got: {str(e)}"
+        print(f"Audience error: {error_msg}")
+        raise HTTPException(status_code=400, detail=error_msg)
+    except jwt.InvalidIssuerError as e:
+        error_msg = f"Invalid issuer. Expected: {QUICK_AUTH_ISSUER}, Got: {str(e)}"
+        print(f"Issuer error: {error_msg}")
+        raise HTTPException(status_code=400, detail=error_msg)
     except jwt.InvalidTokenError as e:
-        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+        error_msg = f"Invalid token: {str(e)}"
+        print(f"Token validation error: {error_msg}")
+        raise HTTPException(status_code=400, detail=error_msg)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Token verification failed: {str(e)}")
+        error_msg = f"Token verification failed: {str(e)}"
+        print(f"Unexpected error during token verification: {error_msg}")
+        raise HTTPException(status_code=500, detail=error_msg) HTTPException(status_code=500, detail=f"Token verification failed: {str(e)}")
 
 # Request/Response models
 class GuessRequest(BaseModel):
@@ -241,11 +262,21 @@ async def validate_word(word: str):
 @app.get("/api/auth")
 async def authenticate_user(payload: dict = Depends(verify_jwt_token)):
     """Authenticate user using Quick Auth JWT token"""
-    # Return the FID (Farcaster ID) from the token payload
-    return {
-        "fid": payload.get("sub"),
-        "authenticated": True
-    }
+    try:
+        # Return the FID (Farcaster ID) from the token payload
+        fid = payload.get("sub")
+        if not fid:
+            raise HTTPException(status_code=400, detail="FID not found in token payload")
+        
+        return {
+            "fid": fid,
+            "authenticated": True
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in auth endpoint: {e}")
+        raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

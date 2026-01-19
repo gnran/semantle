@@ -89,10 +89,15 @@ pip install -r requirements.txt
 - Check that `pyjwt` and `cryptography` packages are installed
 - Verify network connectivity to Farcaster's JWKS endpoint
 
-### "Invalid token" errors
-- Ensure `APP_DOMAIN` matches your actual deployment domain exactly
+### "Invalid token" or 400 errors
+- **Most common cause**: Domain mismatch between token audience and `APP_DOMAIN`
+  - The JWT token is issued for a specific domain (the one in your manifest)
+  - `APP_DOMAIN` must match exactly (without `https://` or trailing slash)
+  - Example: If your app is at `https://semantle.vercel.app`, set `APP_DOMAIN=semantle.vercel.app`
+- Check backend logs for detailed error messages (now includes token payload info)
+- For development/testing, you can temporarily set `VERIFY_AUDIENCE=false` to disable audience verification
 - Check that the token hasn't expired (tokens expire after 1 hour)
-- For development, you can set `VERIFY_AUDIENCE=false` to disable audience verification
+- Verify the JWKS endpoint is accessible: `https://auth.farcaster.xyz/.well-known/jwks.json`
 
 ### Authentication fails silently
 - Check browser console for errors
