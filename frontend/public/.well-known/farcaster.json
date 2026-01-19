@@ -7,7 +7,7 @@
   "miniapp": {
     "version": "1",
     "name": "Semantle",
-    "homeUrl": "https://semantle.vercel.app/",
+    "homeUrl": "https://semantle.vercel.app",
     "iconUrl": "https://semantle.vercel.app/favicon1.png",
     "splashImageUrl": "https://semantle.vercel.app/favicon1.png",
     "splashBackgroundColor": "#000000",

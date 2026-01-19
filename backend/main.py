@@ -266,8 +266,10 @@ async def authenticate_user(payload: dict = Depends(verify_jwt_token)):
         # Return the FID (Farcaster ID) from the token payload
         fid = payload.get("sub")
         if not fid:
+            print(f"Warning: FID not found in payload. Payload: {payload}")
             raise HTTPException(status_code=400, detail="FID not found in token payload")
         
+        print(f"Authentication successful for FID: {fid}")
         return {
             "fid": fid,
             "authenticated": True
@@ -276,6 +278,8 @@ async def authenticate_user(payload: dict = Depends(verify_jwt_token)):
         raise
     except Exception as e:
         print(f"Error in auth endpoint: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
 
 if __name__ == "__main__":

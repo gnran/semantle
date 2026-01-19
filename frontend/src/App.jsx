@@ -55,7 +55,9 @@ function App() {
       setIsAuthenticating(false)
     } catch (error) {
       console.error('Authentication failed:', error)
-      setAuthError('Failed to authenticate. Please try again.')
+      // Show the actual error message if available
+      const errorMessage = error.message || 'Failed to authenticate. Please try again.'
+      setAuthError(errorMessage)
       setIsAuthenticating(false)
       // Still call ready() to hide splash screen even if auth fails
       await sdk.actions.ready()
@@ -86,6 +88,9 @@ function App() {
       <div className="loading-screen">
         <div className="loading-content">
           <p className="error-message">{authError}</p>
+          <p style={{ fontSize: '0.9rem', color: '#aaa', marginTop: '0.5rem' }}>
+            Check browser console for details
+          </p>
           <button onClick={signIn} className="retry-button">Retry</button>
         </div>
       </div>
