@@ -31,8 +31,13 @@ function App() {
       setToken(authToken)
       
       // Verify token with backend and get user data
-      const response = await sdk.quickAuth.fetch(`${API_BASE}/auth`, {
-        headers: { 'Authorization': `Bearer ${authToken}` }
+      // Use regular fetch instead of sdk.quickAuth.fetch() since we already have the token
+      const response = await fetch(`${API_BASE}/auth`, {
+        method: 'GET',
+        headers: { 
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
       })
       
       if (!response.ok) {
