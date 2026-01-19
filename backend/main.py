@@ -18,9 +18,15 @@ from embeddings_manager import EmbeddingsManager
 app = FastAPI(title="Semantle API", version="1.0.0")
 
 # CORS middleware for React frontend
+# Get allowed origins from environment variable or use defaults
+allowed_origins = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://localhost:5173"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -130,26 +136,7 @@ async def validate_word(word: str):
 
 if __name__ == "__main__":
     import uvicorn
-    import json
-    from pathlib import Path
-    
-    # #region agent log
-    log_path = Path(__file__).parent.parent / ".cursor" / "debug.log"
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    log_entry = {
-        "location": "main.py:133",
-        "message": "Starting uvicorn server",
-        "data": {"host": "0.0.0.0", "port": 8000, "cors_origins": ["http://localhost:3000", "http://localhost:5173"]},
-        "timestamp": int(__import__("time").time() * 1000),
-        "sessionId": "debug-session",
-        "runId": "run1",
-        "hypothesisId": "A"
-    }
-    try:
-        with open(log_path, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(log_entry) + '\n')
-    except:
-        pass
-    # #endregion
-    
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    # Get port from environment variable (Railway provides PORT)
+    port = int(os.getenv("PORT", 8000))
+    host = os.getenv("HOST", "0.0.0.0")
+    uvicorn.run(app, host=host, port=port)

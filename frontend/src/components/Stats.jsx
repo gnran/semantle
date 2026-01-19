@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import './Stats.css'
 
-const API_BASE = '/api'
+// Use environment variable for API URL, fallback to '/api' for local development
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 function Stats() {
   const [stats, setStats] = useState(null)

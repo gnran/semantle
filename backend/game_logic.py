@@ -38,11 +38,16 @@ class GameLogic:
     def __init__(self, embeddings_manager: EmbeddingsManager):
         self.embeddings_manager = embeddings_manager
         self.sessions: Dict[str, GameSession] = {}
-        # Get paths relative to this file's location (project root)
-        project_root = Path(__file__).parent.parent
-        self.stats_file = project_root / "backend" / "data" / "stats.json"
+        # Get paths relative to this file's location
+        # Try backend directory first (for Railway deployment), then project root
+        backend_dir = Path(__file__).parent
+        project_root = backend_dir.parent
+        self.stats_file = backend_dir / "data" / "stats.json"
         self.stats_file.parent.mkdir(parents=True, exist_ok=True)
-        self.words_file = project_root / "words.json"
+        # Check backend directory first, then project root
+        backend_words = backend_dir / "words.json"
+        root_words = project_root / "words.json"
+        self.words_file = backend_words if backend_words.exists() else root_words
         self.target_words = []
         self._load_words()
         self._load_daily_word()

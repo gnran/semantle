@@ -5,7 +5,8 @@ import GuessList from './GuessList'
 import GameInfo from './GameInfo'
 import './Game.css'
 
-const API_BASE = '/api'
+// Use environment variable for API URL, fallback to '/api' for local development
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 // Check if debug mode is enabled (via URL parameter or localStorage)
 const isDebugMode = () => {

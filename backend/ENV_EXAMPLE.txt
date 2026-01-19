@@ -1,0 +1,13 @@
+# Copy this file to .env and fill in your values
+# Railway will set these as environment variables in the dashboard
+
+# OpenAI API Key (required)
+OPENAI_API_KEY=your-openai-api-key-here
+
+# Allowed CORS origins (comma-separated)
+# For production, include your Vercel frontend URL
+# Example: ALLOWED_ORIGINS=https://your-app.vercel.app,http://localhost:3000
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# Port (Railway will set this automatically via PORT environment variable)
+# PORT=8000
