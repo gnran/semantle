@@ -22,13 +22,20 @@ app = FastAPI(title="Semantle API", version="1.0.0")
 @app.on_event("startup")
 async def startup_event():
     """Log startup completion for Railway health checks"""
-    print("✅ FastAPI application startup complete")
-    print(f"📡 Server is ready to accept connections")
+    import sys
+    print("=" * 60, file=sys.stderr)
+    print("✅ FastAPI application startup complete", file=sys.stderr)
+    print(f"📡 Server is ready to accept connections", file=sys.stderr)
+    print(f"🔍 Health check available at: /health", file=sys.stderr)
+    print(f"🌐 Root endpoint available at: /", file=sys.stderr)
+    print(f"📊 API info available at: /api", file=sys.stderr)
+    print("=" * 60, file=sys.stderr)
     
 @app.on_event("shutdown")
 async def shutdown_event():
     """Log shutdown for debugging"""
-    print("🛑 FastAPI application shutdown initiated")
+    import sys
+    print("🛑 FastAPI application shutdown initiated", file=sys.stderr)
 
 # CORS middleware for React frontend
 # Get allowed origins from environment variable or use defaults
@@ -55,8 +62,16 @@ app.add_middleware(
 )
 
 # Initialize game logic and embeddings
-embeddings_manager = EmbeddingsManager()
-game_logic = GameLogic(embeddings_manager)
+# Wrap in try-except to handle initialization errors gracefully
+try:
+    embeddings_manager = EmbeddingsManager()
+    game_logic = GameLogic(embeddings_manager)
+    print("✅ Core services initialized successfully")
+except Exception as e:
+    print(f"❌ Error initializing core services: {e}")
+    print("⚠️  Service will start but may not function correctly")
+    # Raise the error to prevent silent failures
+    raise
 
 # Quick Auth configuration
 QUICK_AUTH_ISSUER = "https://auth.farcaster.xyz"
@@ -246,23 +261,13 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint for Railway and other load balancers"""
-    try:
-        # Basic health check - verify that core services are initialized
-        # Check if embeddings manager is available (it should be initialized at startup)
-        is_ready = embeddings_manager is not None and game_logic is not None
-        return {
-            "status": "healthy" if is_ready else "starting",
-            "service": "Semantle API",
-            "version": "1.0.0",
-            "ready": is_ready
-        }
-    except Exception as e:
-        return {
-            "status": "unhealthy",
-            "service": "Semantle API",
-            "version": "1.0.0",
-            "error": str(e)
-        }
+    # Simple, fast health check that always returns 200
+    # Railway needs this to verify the service is running
+    return {
+        "status": "healthy",
+        "service": "Semantle API",
+        "version": "1.0.0"
+    }
 
 @app.get("/api")
 async def api_info():
