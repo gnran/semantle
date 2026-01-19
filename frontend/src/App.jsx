@@ -6,7 +6,7 @@ import Header from './components/Header'
 import LoginModal from './components/LoginModal'
 import FAQModal from './components/FAQModal'
 import ProfileModal from './components/ProfileModal'
-import { initializeAuth, getAuthState, connectWallet, connectFarcaster, isAuthenticated, disconnectWallet } from './utils/auth'
+import { initializeAuth, getAuthState, connectWallet, connectFarcaster, isAuthenticated } from './utils/auth'
 import './App.css'
 
 function App() {
@@ -77,8 +77,8 @@ function App() {
     }
   }
 
-  const handleLogout = async () => {
-    await disconnectWallet()
+  const handleLogout = () => {
+    localStorage.removeItem('semantle_auth')
     setAuthState({ connected: false })
     setShowLoginModal(true)
     setShowProfileModal(false)
