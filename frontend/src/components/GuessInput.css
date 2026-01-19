@@ -1,0 +1,70 @@
+.guess-input {
+  margin: 2rem 0;
+}
+
+.input-container {
+  display: flex;
+  gap: 1rem;
+}
+
+.guess-field {
+  flex: 1;
+  padding: 1rem;
+  font-size: 1.1rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  transition: border-color 0.3s;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.guess-field::placeholder {
+  color: #666;
+}
+
+.guess-field:focus {
+  outline: none;
+  border-color: #667eea;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.guess-field:disabled {
+  background: rgba(255, 255, 255, 0.02);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.guess-button {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-width: 120px;
+}
+
+.guess-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.guess-button:disabled {
+  background: #444;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+  .input-container {
+    flex-direction: column;
+  }
+  
+  .guess-button {
+    width: 100%;
+  }
+}

@@ -1,0 +1,89 @@
+.game-info {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.info-header h2 {
+  font-size: 1.8rem;
+  color: #fff;
+}
+
+.completed-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.debug-badge {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: help;
+}
+
+.info-stats {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #aaa;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.target-word {
+  color: #667eea;
+  text-transform: uppercase;
+}
+
+.target-word.debug-word {
+  color: #f5576c;
+  border-bottom: 2px dashed #f5576c;
+  padding-bottom: 0.2rem;
+}
+
+.game-instructions {
+  color: #aaa;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .info-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .info-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
