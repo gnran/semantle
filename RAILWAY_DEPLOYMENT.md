@@ -127,11 +127,18 @@ This is your backend API URL. You'll need this for the frontend configuration.
 - **Common Issues:**
   - Missing `OPENAI_API_KEY` environment variable
   - Port configuration issues (Railway sets `PORT` automatically)
-  - Missing dependencies: Make sure Railway detects Python (should see `requirements.txt` in build logs)
-  - If you see "ModuleNotFoundError": Railway might not be installing dependencies correctly
-    - Check that `requirements.txt` exists in root or backend directory
-    - Verify Railway is using the correct root directory
-    - Check build logs for pip install output
+  - **"uvicorn: command not found" or "ModuleNotFoundError":**
+    - Railway should automatically install dependencies from `requirements.txt`
+    - Check build logs for `pip install` output - you should see packages being installed
+    - If dependencies aren't installing:
+      1. Verify `requirements.txt` exists in root directory (references `backend/requirements.txt`)
+      2. Check that Railway is detecting Python (should see Python version in build logs)
+      3. Ensure Railway root directory is set correctly (root or backend both work)
+      4. The Procfile now uses `python -m uvicorn` which is more reliable
+  - **If Railway detects Node.js instead of Python:**
+    - Railway might prioritize `package.json` over `requirements.txt`
+    - Solution: Set the **Root Directory** to `backend` in Railway settings
+    - Or ensure `requirements.txt` and `Procfile` are in root directory
 
 ### CORS Errors
 
