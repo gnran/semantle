@@ -89,8 +89,11 @@ function Game({ sessionId, setSessionId }) {
               setIsDaily(session.daily_word || false)
               return
             } catch (err) {
-              // Session doesn't exist on backend, clear saved state
-              console.log('Session not found on backend, clearing saved state')
+              // Session doesn't exist on backend (likely server restarted), clear saved state
+              // Silently handle 404 errors as they're expected when sessions are lost
+              if (err.response?.status !== 404) {
+                console.error('Error verifying session:', err)
+              }
               clearGameState()
             }
           } else {
@@ -119,44 +122,10 @@ function Game({ sessionId, setSessionId }) {
     setIsLoading(true)
     setError(null)
     try {
-      // #region agent log
-      const logData = {
-        location: 'Game.jsx:25',
-        message: 'Starting new game request',
-        data: { daily, apiBase: API_BASE, fullUrl: `${API_BASE}/game/new` },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        runId: 'run1',
-        hypothesisId: 'A'
-      };
-      fetch('http://127.0.0.1:7243/ingest/fc7a04ce-7d7a-4cb6-a696-c54c9d0711b1', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(logData)
-      }).catch(() => {});
-      // #endregion
-      
       const response = await axios.post(
         `${API_BASE}/game/new?debug=${debugMode}`,
         { daily }
       )
-      
-      // #region agent log
-      const logData2 = {
-        location: 'Game.jsx:35',
-        message: 'New game request successful',
-        data: { status: response.status, hasData: !!response.data },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        runId: 'run1',
-        hypothesisId: 'A'
-      };
-      fetch('http://127.0.0.1:7243/ingest/fc7a04ce-7d7a-4cb6-a696-c54c9d0711b1', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(logData2)
-      }).catch(() => {});
-      // #endregion
       
       setGameSession(response.data)
       setSessionId(response.data.session_id)
@@ -166,30 +135,6 @@ function Game({ sessionId, setSessionId }) {
       // Save game state to localStorage
       saveGameState(response.data, response.data.attempts || [])
     } catch (err) {
-      // #region agent log
-      const logData3 = {
-        location: 'Game.jsx:48',
-        message: 'New game request failed',
-        data: {
-          error: err.message,
-          code: err.code,
-          responseStatus: err.response?.status,
-          responseData: err.response?.data,
-          requestUrl: err.config?.url,
-          requestBaseURL: err.config?.baseURL
-        },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        runId: 'run1',
-        hypothesisId: 'A'
-      };
-      fetch('http://127.0.0.1:7243/ingest/fc7a04ce-7d7a-4cb6-a696-c54c9d0711b1', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(logData3)
-      }).catch(() => {});
-      // #endregion
-      
       setError('Failed to start new game')
       console.error(err)
     } finally {
