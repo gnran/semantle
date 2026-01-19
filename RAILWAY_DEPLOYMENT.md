@@ -31,8 +31,12 @@ The backend is located in the `backend/` directory. Make sure you have:
    - Railway will detect it's a Python project
 
 3. **Configure the Service**
-   - Set the **Root Directory** to `backend`
-   - Railway will automatically detect the `Procfile` and `requirements.txt`
+   - **Option 1 (Recommended):** Leave Root Directory as root (default)
+     - Railway will use the root-level `Procfile` and `requirements.txt`
+     - These automatically reference the backend directory
+   - **Option 2:** Set the **Root Directory** to `backend`
+     - Railway will use `backend/Procfile` and `backend/requirements.txt`
+     - Both configurations work correctly
 
 4. **Set Environment Variables**
    - Go to your service → **Variables** tab
@@ -123,7 +127,11 @@ This is your backend API URL. You'll need this for the frontend configuration.
 - **Common Issues:**
   - Missing `OPENAI_API_KEY` environment variable
   - Port configuration issues (Railway sets `PORT` automatically)
-  - Missing dependencies (check `requirements.txt`)
+  - Missing dependencies: Make sure Railway detects Python (should see `requirements.txt` in build logs)
+  - If you see "ModuleNotFoundError": Railway might not be installing dependencies correctly
+    - Check that `requirements.txt` exists in root or backend directory
+    - Verify Railway is using the correct root directory
+    - Check build logs for pip install output
 
 ### CORS Errors
 

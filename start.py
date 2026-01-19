@@ -50,9 +50,11 @@ def is_production_environment():
     # Heroku sets PORT and DYNO
     # Other platforms typically set PORT
     # In production, VIRTUAL_ENV is typically not set
+    # Also check if we're being run as a module (Railway/Heroku use Procfile)
     return (
         os.getenv("RAILWAY_ENVIRONMENT") is not None or
         os.getenv("DYNO") is not None or
+        os.getenv("RAILWAY") is not None or
         (os.getenv("PORT") is not None and os.getenv("VIRTUAL_ENV") is None)
     )
 
@@ -236,6 +238,13 @@ def start_frontend():
 
 def main():
     """Main function to start both servers"""
+    # Don't run in production environments - Railway/Heroku use Procfile
+    if is_production_environment():
+        print("⚠️  This launcher is for local development only.")
+        print("   In production, Railway/Heroku use Procfile to start the server.")
+        print("   Backend should be started with: uvicorn main:app --host 0.0.0.0 --port $PORT")
+        sys.exit(0)
+    
     print("=" * 50)
     print("🎮 Semantle Game Launcher")
     print("=" * 50)
