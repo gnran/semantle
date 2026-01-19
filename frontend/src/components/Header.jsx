@@ -1,10 +1,19 @@
 import React from 'react'
 import './Header.css'
 
-function Header({ currentView, setCurrentView, authState, onConnectWallet, isConnecting }) {
+function Header({ currentView, setCurrentView, authState, onLogout }) {
   const formatAddress = (address) => {
     if (!address) return ''
     return `${address.slice(0, 6)}...${address.slice(-4)}`
+  }
+
+  const getLoginMethodLabel = () => {
+    if (authState.loginMethod === 'farcaster') {
+      return 'Farcaster'
+    } else if (authState.loginMethod === 'coinbase') {
+      return 'Coinbase'
+    }
+    return 'Connected'
   }
 
   return (
@@ -30,21 +39,30 @@ function Header({ currentView, setCurrentView, authState, onConnectWallet, isCon
         <div className="wallet-section">
           {authState.connected ? (
             <div className="wallet-connected">
-              <span className="wallet-address" title={authState.address}>
-                {formatAddress(authState.address)}
-              </span>
+              {authState.address && (
+                <span className="wallet-address" title={authState.address}>
+                  {formatAddress(authState.address)}
+                </span>
+              )}
               {authState.username && (
                 <span className="wallet-username">@{authState.username}</span>
               )}
+              {!authState.address && !authState.username && authState.fid && (
+                <span className="wallet-username">FID: {authState.fid}</span>
+              )}
+              <span className="login-method-badge">{getLoginMethodLabel()}</span>
+              <button
+                className="logout-button"
+                onClick={onLogout}
+                title="Logout"
+              >
+                Logout
+              </button>
             </div>
           ) : (
-            <button
-              className="connect-wallet-button"
-              onClick={onConnectWallet}
-              disabled={isConnecting}
-            >
-              {isConnecting ? 'Connecting...' : 'Connect Wallet'}
-            </button>
+            <div className="wallet-disconnected">
+              <span className="not-connected">Not connected</span>
+            </div>
           )}
         </div>
       </div>

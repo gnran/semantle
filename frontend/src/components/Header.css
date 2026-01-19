@@ -100,6 +100,44 @@
   color: #aaa;
 }
 
+.login-method-badge {
+  font-size: 0.7rem;
+  color: #888;
+  padding: 0.1rem 0.4rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  margin-top: 0.1rem;
+}
+
+.logout-button {
+  padding: 0.3rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: #aaa;
+  font-size: 0.75rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  margin-top: 0.3rem;
+}
+
+.logout-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.wallet-disconnected {
+  display: flex;
+  align-items: center;
+}
+
+.not-connected {
+  font-size: 0.85rem;
+  color: #888;
+  font-style: italic;
+}
+
 @media (max-width: 768px) {
   .header {
     padding: 1rem;

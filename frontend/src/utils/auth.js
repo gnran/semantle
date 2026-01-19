@@ -45,6 +45,41 @@ export function initializeAuth() {
 }
 
 /**
+ * Connect with Farcaster only (no wallet required)
+ * @returns {Promise<{fid: number, username?: string, connected: boolean}>}
+ */
+export async function connectFarcaster() {
+  try {
+    // Get Farcaster user context
+    const context = await sdk.context
+    
+    if (!context?.user) {
+      throw new Error('Farcaster user context not available')
+    }
+
+    const fid = context.user.fid
+    const username = context.user.username || null
+
+    // Store auth state
+    const authState = {
+      fid,
+      username,
+      address: null,
+      connected: true,
+      loginMethod: 'farcaster',
+      connectedAt: Date.now()
+    }
+
+    localStorage.setItem('semantle_auth', JSON.stringify(authState))
+
+    return authState
+  } catch (error) {
+    console.error('Failed to connect with Farcaster:', error)
+    throw error
+  }
+}
+
+/**
  * Connect wallet and authenticate user
  * @returns {Promise<{address: string, fid?: number, username?: string}>}
  */
@@ -89,6 +124,7 @@ export async function connectWallet() {
       fid,
       username,
       connected: true,
+      loginMethod: 'coinbase',
       connectedAt: Date.now()
     }
 
@@ -103,7 +139,7 @@ export async function connectWallet() {
 
 /**
  * Get current authentication state
- * @returns {Promise<{address?: string, fid?: number, username?: string, connected: boolean}>}
+ * @returns {Promise<{address?: string, fid?: number, username?: string, loginMethod?: string, connected: boolean}>}
  */
 export async function getAuthState() {
   try {
@@ -121,32 +157,55 @@ export async function getAuthState() {
     if (savedAuth) {
       const authState = JSON.parse(savedAuth)
       
-      // Verify connection is still valid
-      if (provider) {
+      // If logged in with Farcaster only, verify Farcaster context
+      if (authState.loginMethod === 'farcaster') {
         try {
-          const accounts = await provider.request({ method: 'eth_accounts' })
-          if (accounts && accounts.length > 0 && accounts[0] === authState.address) {
-            // Update Farcaster context if available
-            try {
-              const context = await sdk.context
-              if (context?.user) {
-                authState.fid = context.user.fid
-                authState.username = context.user.username
-                localStorage.setItem('semantle_auth', JSON.stringify(authState))
-              }
-            } catch (err) {
-              // Ignore Farcaster context errors
-            }
-            
+          const context = await sdk.context
+          if (context?.user && context.user.fid === authState.fid) {
+            // Update username if available
+            authState.username = context.user.username || authState.username
+            localStorage.setItem('semantle_auth', JSON.stringify(authState))
             return { ...authState, connected: true }
+          } else {
+            // Farcaster context changed or unavailable, clear auth
+            localStorage.removeItem('semantle_auth')
+            return { connected: false }
           }
         } catch (err) {
-          console.warn('Could not verify wallet connection:', err)
+          console.warn('Could not verify Farcaster connection:', err)
+          // If we can't verify, assume still connected (might be temporary issue)
+          return { ...authState, connected: true }
+        }
+      }
+      
+      // If logged in with Coinbase wallet, verify wallet connection
+      if (authState.loginMethod === 'coinbase' && authState.address) {
+        if (provider) {
+          try {
+            const accounts = await provider.request({ method: 'eth_accounts' })
+            if (accounts && accounts.length > 0 && accounts[0] === authState.address) {
+              // Update Farcaster context if available
+              try {
+                const context = await sdk.context
+                if (context?.user) {
+                  authState.fid = context.user.fid
+                  authState.username = context.user.username
+                  localStorage.setItem('semantle_auth', JSON.stringify(authState))
+                }
+              } catch (err) {
+                // Ignore Farcaster context errors
+              }
+              
+              return { ...authState, connected: true }
+            }
+          } catch (err) {
+            console.warn('Could not verify wallet connection:', err)
+          }
         }
       }
     }
 
-    // Try to get Farcaster context even if wallet not connected
+    // Try to get Farcaster context even if not saved
     try {
       const context = await sdk.context
       if (context?.user) {
@@ -185,19 +244,19 @@ export async function disconnectWallet() {
 }
 
 /**
- * Get user ID from authenticated wallet address or fallback to Farcaster FID
+ * Get user ID from authenticated wallet address or Farcaster FID
  * @returns {Promise<string>}
  */
 export async function getUserId() {
   try {
     const authState = await getAuthState()
     
-    // Prefer wallet address as user ID
+    // Prefer wallet address as user ID (Coinbase login)
     if (authState.address) {
       return authState.address.toLowerCase()
     }
     
-    // Fallback to Farcaster FID
+    // Use Farcaster FID (Farcaster login)
     if (authState.fid) {
       return `fid_${authState.fid}`
     }
@@ -218,5 +277,5 @@ export async function getUserId() {
  */
 export async function isAuthenticated() {
   const authState = await getAuthState()
-  return authState.connected === true && !!authState.address
+  return authState.connected === true && (!!authState.address || !!authState.fid)
 }
