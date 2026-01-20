@@ -60,100 +60,112 @@ export async function connectFarcaster() {
     const fid = context.user.fid
     const username = context.user.username || null
     
-    // Log Farcaster context fields for debugging
-    console.log('=== Farcaster Context Fields ===')
-    console.log('Full context:', context)
-    console.log('Context keys:', Object.keys(context || {}))
-    console.log('User object:', context.user)
-    console.log('User object keys:', Object.keys(context.user || {}))
-    console.log('User object (JSON):', JSON.stringify(context.user, null, 2))
-    console.log('custodyAddress:', context.user.custodyAddress)
-    console.log('verifiedAddresses:', context.user.verifiedAddresses)
-    console.log('walletAddress:', context.user.walletAddress)
-    // Check for alternative field names
-    console.log('All user properties:', Object.getOwnPropertyNames(context.user || {}))
-    console.log('================================')
+    // Log Farcaster context for debugging
+    console.log('=== Farcaster Context ===')
+    console.log('FID:', fid)
+    console.log('Username:', username)
+    console.log('Available user fields:', Object.keys(context.user))
+    console.log('Full context keys:', Object.keys(context))
+    console.log('========================')
     
-    // Try to get wallet address using Farcaster SDK's wallet methods
+    // Check if Quick Auth is available (for future use)
+    if (sdk.quickAuth) {
+      console.log('Quick Auth available:', !!sdk.quickAuth)
+      console.log('Quick Auth methods:', Object.keys(sdk.quickAuth || {}))
+    }
+    
+    // Try to get wallet address using Farcaster SDK's wallet provider
+    // According to Base docs: https://docs.base.org/mini-apps/core-concepts/authentication
+    // Wallet addresses must be obtained through the wallet provider
     let address = null
     let walletSource = null
     
+    // Check if wallet methods are available
+    console.log('=== Checking Farcaster Wallet Provider ===')
+    console.log('sdk.wallet exists:', !!sdk.wallet)
+    if (sdk.wallet) {
+      console.log('sdk.wallet methods:', Object.keys(sdk.wallet))
+      console.log('getEthereumProvider exists:', typeof sdk.wallet.getEthereumProvider === 'function')
+    }
+    
     try {
-      // Method 1: Try to get Ethereum provider from Farcaster SDK (PRIORITY)
-      console.log('=== Checking Farcaster Wallet Provider ===')
-      console.log('sdk.wallet exists:', !!sdk.wallet)
-      console.log('sdk.wallet methods:', sdk.wallet ? Object.keys(sdk.wallet) : 'N/A')
-      
+      // Method 1: Try to get Ethereum provider from Farcaster SDK
       if (sdk.wallet && typeof sdk.wallet.getEthereumProvider === 'function') {
-        console.log('getEthereumProvider function exists')
+        console.log('Getting Farcaster Ethereum provider...')
         const farcasterProvider = sdk.wallet.getEthereumProvider()
-        console.log('Farcaster provider:', farcasterProvider)
+        console.log('Provider obtained:', !!farcasterProvider)
         console.log('Provider type:', typeof farcasterProvider)
         
-        if (farcasterProvider && typeof farcasterProvider.request === 'function') {
-          try {
-            // First try to get existing accounts (might already be connected)
-            console.log('Requesting eth_accounts...')
-            const accounts = await farcasterProvider.request({ method: 'eth_accounts' })
-            console.log('eth_accounts result:', accounts)
-            
-            if (accounts && accounts.length > 0) {
-              address = accounts[0]
-              walletSource = 'farcaster'
-              console.log('Found address from eth_accounts:', address)
-            } else {
-              // If no accounts, request connection
-              console.log('No accounts found, requesting eth_requestAccounts...')
-              const requestedAccounts = await farcasterProvider.request({ method: 'eth_requestAccounts' })
-              console.log('eth_requestAccounts result:', requestedAccounts)
+        if (farcasterProvider) {
+          // Check if provider has request method (EIP-1193 standard)
+          if (typeof farcasterProvider.request === 'function') {
+            try {
+              // First try to get existing accounts (might already be connected)
+              console.log('Requesting eth_accounts (checking for connected wallet)...')
+              const accounts = await farcasterProvider.request({ method: 'eth_accounts' })
+              console.log('eth_accounts result:', accounts)
               
-              if (requestedAccounts && requestedAccounts.length > 0) {
-                address = requestedAccounts[0]
+              if (accounts && accounts.length > 0) {
+                address = accounts[0]
                 walletSource = 'farcaster'
-                console.log('Found address from eth_requestAccounts:', address)
+                console.log('✅ Found Farcaster wallet address:', address)
               } else {
-                console.log('No accounts returned from eth_requestAccounts')
+                // If no accounts, request connection (this will prompt user)
+                console.log('No wallet connected, requesting connection via eth_requestAccounts...')
+                try {
+                  const requestedAccounts = await farcasterProvider.request({ method: 'eth_requestAccounts' })
+                  console.log('eth_requestAccounts result:', requestedAccounts)
+                  
+                  if (requestedAccounts && requestedAccounts.length > 0) {
+                    address = requestedAccounts[0]
+                    walletSource = 'farcaster'
+                    console.log('✅ Connected Farcaster wallet address:', address)
+                  } else {
+                    console.log('⚠️ No accounts returned from eth_requestAccounts')
+                  }
+                } catch (requestErr) {
+                  console.log('⚠️ User rejected wallet connection or error:', requestErr.message)
+                }
+              }
+            } catch (err) {
+              console.log('❌ Farcaster wallet request failed:', err.message)
+              console.error('Error details:', err)
+            }
+          } else {
+            // Try alternative provider methods
+            console.log('Provider does not have request method, checking for alternative methods...')
+            if (typeof farcasterProvider.send === 'function') {
+              console.log('Provider has send method, trying alternative approach...')
+              try {
+                const result = await farcasterProvider.send('eth_accounts', [])
+                if (result && result.length > 0) {
+                  address = result[0]
+                  walletSource = 'farcaster'
+                  console.log('✅ Found address via send method:', address)
+                }
+              } catch (err) {
+                console.log('Alternative send method failed:', err.message)
               }
             }
-          } catch (err) {
-            console.log('Farcaster wallet connection failed:', err)
-            console.error('Error details:', err)
           }
         } else {
-          console.log('Provider request method not available')
+          console.log('⚠️ getEthereumProvider returned null/undefined')
         }
       } else {
-        console.log('getEthereumProvider function not available')
+        console.log('⚠️ sdk.wallet.getEthereumProvider is not available')
       }
-      console.log('=========================================')
     } catch (err) {
-      console.log('Farcaster wallet provider not available:', err)
+      console.log('❌ Farcaster wallet provider error:', err.message)
       console.error('Error details:', err)
     }
     
-    // Method 2: Try to get address from Farcaster context fields (fallback)
-    if (!address && context.user) {
-      console.log('Checking Farcaster context fields for address...')
-      console.log('custodyAddress:', context.user.custodyAddress)
-      console.log('verifiedAddresses:', context.user.verifiedAddresses)
-      console.log('walletAddress:', context.user.walletAddress)
-      
-      if (context.user.custodyAddress) {
-        address = context.user.custodyAddress
-        walletSource = 'farcaster_context'
-        console.log('Using custodyAddress:', address)
-      } else if (context.user.verifiedAddresses && context.user.verifiedAddresses.length > 0) {
-        address = context.user.verifiedAddresses[0]
-        walletSource = 'farcaster_context'
-        console.log('Using verifiedAddresses[0]:', address)
-      } else if (context.user.walletAddress) {
-        address = context.user.walletAddress
-        walletSource = 'farcaster_context'
-        console.log('Using walletAddress:', address)
-      } else {
-        console.log('No address found in Farcaster context fields')
-      }
-    }
+    console.log('=== Wallet Provider Check Complete ===')
+    console.log('Final address:', address)
+    console.log('Wallet source:', walletSource)
+    console.log('=====================================')
+    
+    // Note: Farcaster context does NOT contain wallet address fields
+    // Wallet addresses must be obtained through sdk.wallet.getEthereumProvider()
 
     // Store auth state
     const authState = {
@@ -262,25 +274,12 @@ export async function getAuthState() {
             // Update username if available
             authState.username = context.user.username || authState.username
             
-            // Log Farcaster context fields for debugging
-            console.log('=== getAuthState: Farcaster Context Fields ===')
-            console.log('Full context:', context)
-            console.log('Context keys:', Object.keys(context || {}))
-            console.log('User object:', context.user)
-            console.log('User object keys:', Object.keys(context.user || {}))
-            console.log('User object (JSON):', JSON.stringify(context.user, null, 2))
-            console.log('custodyAddress:', context.user.custodyAddress)
-            console.log('verifiedAddresses:', context.user.verifiedAddresses)
-            console.log('walletAddress:', context.user.walletAddress)
-            // Check for alternative field names
-            console.log('All user properties:', Object.getOwnPropertyNames(context.user || {}))
-            console.log('===============================================')
-            
-            // Try to get/update wallet address using Farcaster SDK wallet methods
+            // Try to get/update wallet address using Farcaster SDK wallet provider
+            // Note: Wallet addresses are NOT available in context - must use wallet provider
             let address = null
             let walletSource = null
             
-            // Method 1: Try Farcaster SDK wallet provider (PRIORITY)
+            // Try Farcaster SDK wallet provider (only way to get wallet address)
             try {
               if (sdk.wallet && typeof sdk.wallet.getEthereumProvider === 'function') {
                 const farcasterProvider = sdk.wallet.getEthereumProvider()
@@ -289,38 +288,18 @@ export async function getAuthState() {
                   if (accounts && accounts.length > 0) {
                     address = accounts[0]
                     walletSource = 'farcaster'
+                    console.log('getAuthState: Found Farcaster wallet address:', address)
+                  } else {
+                    console.log('getAuthState: No Farcaster wallet connected')
                   }
                 }
               }
             } catch (err) {
-              // Farcaster wallet not available
+              console.log('getAuthState: Farcaster wallet not available:', err.message)
             }
             
-            // Method 2: Try context fields as fallback (Farcaster addresses)
-            if (!address && context.user) {
-              console.log('getAuthState: Checking Farcaster context fields for address...')
-              console.log('custodyAddress:', context.user.custodyAddress)
-              console.log('verifiedAddresses:', context.user.verifiedAddresses)
-              console.log('walletAddress:', context.user.walletAddress)
-              
-              if (context.user.custodyAddress) {
-                address = context.user.custodyAddress
-                walletSource = 'farcaster_context'
-                console.log('getAuthState: Using custodyAddress:', address)
-              } else if (context.user.verifiedAddresses && context.user.verifiedAddresses.length > 0) {
-                address = context.user.verifiedAddresses[0]
-                walletSource = 'farcaster_context'
-                console.log('getAuthState: Using verifiedAddresses[0]:', address)
-              } else if (context.user.walletAddress) {
-                address = context.user.walletAddress
-                walletSource = 'farcaster_context'
-                console.log('getAuthState: Using walletAddress:', address)
-              } else {
-                console.log('getAuthState: No address found in Farcaster context fields')
-              }
-            }
-            
-            // DON'T fallback to Base Account SDK - keep Farcaster wallet only
+            // Note: Farcaster context does NOT contain wallet address fields
+            // (custodyAddress, verifiedAddresses, walletAddress don't exist in context)
             
             // Update address if found
             if (address && address !== authState.address) {
