@@ -406,3 +406,34 @@ export async function isAuthenticated() {
   const authState = await getAuthState()
   return authState.connected === true && (!!authState.address || !!authState.fid)
 }
+
+/**
+ * Get the Ethereum provider (wrapped in ethers format)
+ * @returns {Promise<ethers.Provider|null>} Ethers provider or null if not available
+ */
+export async function getProvider() {
+  try {
+    // Initialize if not already done
+    if (!isInitialized) {
+      try {
+        initializeAuth()
+      } catch (err) {
+        console.warn('Could not initialize auth SDK:', err)
+        return null
+      }
+    }
+
+    if (!provider) {
+      return null
+    }
+
+    // Import ethers dynamically to avoid circular dependencies
+    const { ethers } = await import('ethers')
+    
+    // Wrap the provider in ethers BrowserProvider
+    return new ethers.BrowserProvider(provider)
+  } catch (error) {
+    console.error('Failed to get provider:', error)
+    return null
+  }
+}

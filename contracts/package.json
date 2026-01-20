@@ -1,0 +1,20 @@
+{
+  "name": "semantle-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for Semantle game statistics",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "create-wallet": "node scripts/create-wallet.js",
+    "deploy:base": "hardhat run scripts/deploy.js --network base",
+    "deploy:baseSepolia": "hardhat run scripts/deploy.js --network baseSepolia",
+    "deploy:local": "hardhat run scripts/deploy.js --network hardhat",
+    "verify:base": "hardhat verify --network base",
+    "verify:baseSepolia": "hardhat verify --network baseSepolia"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.19.0",
+    "dotenv": "^16.3.1"
+  }
+}

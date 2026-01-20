@@ -1,34 +1,57 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-import { getUserId } from '../utils/userId'
+import React, { useState, useEffect, useCallback } from 'react'
+import { getStatsFromChain, isContractConfigured } from '../utils/contract'
+import { getProvider } from '../utils/auth'
 import './ProfileModal.css'
-
-// Use environment variable for API URL, fallback to '/api' for local development
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 function ProfileModal({ isOpen, onClose, authState, onLogout }) {
   const [stats, setStats] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    if (isOpen && authState.connected) {
-      loadStats()
+  const loadStats = useCallback(async () => {
+    if (!authState.address) {
+      setStats(null)
+      return
     }
-  }, [isOpen, authState.connected])
 
-  const loadStats = async () => {
+    // Check if contract is configured
+    if (!isContractConfigured()) {
+      console.warn('Contract not configured, cannot load blockchain stats')
+      setStats(null)
+      return
+    }
+
     setIsLoading(true)
     try {
-      const userId = await getUserId()
-      const response = await axios.get(`${API_BASE}/stats/${userId}`)
-      setStats(response.data)
+      const provider = await getProvider()
+      if (!provider) {
+        throw new Error('Provider not available')
+      }
+
+      const blockchainStats = await getStatsFromChain(authState.address, provider)
+      
+      // Map blockchain stats to display format
+      setStats({
+        total_games: blockchainStats.totalGames,
+        completed_games: blockchainStats.totalGames, // All games on chain are completed
+        average_attempts: blockchainStats.averageAttempts,
+        best_score: blockchainStats.bestScore > 0 ? blockchainStats.bestScore : null
+      })
     } catch (err) {
-      console.error('Failed to load stats:', err)
+      console.error('Failed to load stats from blockchain:', err)
       setStats(null)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [authState.address])
+
+  useEffect(() => {
+    if (isOpen && authState.connected && authState.address) {
+      loadStats()
+    } else if (isOpen && authState.connected && !authState.address) {
+      // User is connected but doesn't have a wallet address
+      setStats(null)
+    }
+  }, [isOpen, authState.connected, authState.address, loadStats])
 
   const formatAddress = (address) => {
     if (!address) return 'Not connected'
@@ -86,9 +109,13 @@ function ProfileModal({ isOpen, onClose, authState, onLogout }) {
               </div>
 
               <div className="profile-stats-section">
-                <h3>Current Stats</h3>
-                {isLoading ? (
-                  <div className="profile-stats-loading">Loading stats...</div>
+                <h3>Current Stats {authState.address && <span className="profile-stats-source">(Blockchain)</span>}</h3>
+                {!authState.address ? (
+                  <div className="profile-stats-empty">
+                    Connect your wallet to view blockchain stats.
+                  </div>
+                ) : isLoading ? (
+                  <div className="profile-stats-loading">Loading stats from blockchain...</div>
                 ) : stats ? (
                   <div className="profile-stats-grid">
                     <div className="profile-stat-box">
