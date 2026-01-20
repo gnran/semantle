@@ -3,6 +3,7 @@
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
+  position: relative;
 }
 
 .main-content {
@@ -10,7 +11,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 2rem;
+  padding: var(--spacing-xl);
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
@@ -26,12 +27,14 @@
 }
 
 .loading-screen p {
-  font-size: 1.2rem;
+  font-size: 1.125rem;
   color: var(--text-secondary);
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 @media (max-width: 768px) {
   .main-content {
-    padding: 1rem;
+    padding: var(--spacing-md);
   }
 }

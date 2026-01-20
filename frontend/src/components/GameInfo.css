@@ -1,89 +1,108 @@
 .game-info {
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 2px solid var(--border-color);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .info-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
 }
 
 .info-header h2 {
-  font-size: 1.2rem;
+  font-size: 1.375rem;
   color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .completed-badge {
   background: var(--accent-gradient);
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-weight: bold;
-  font-size: 0.9rem;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.875rem;
+  box-shadow: var(--shadow-sm);
+  letter-spacing: 0.025em;
 }
 
 .debug-badge {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-weight: bold;
-  font-size: 0.9rem;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.875rem;
   cursor: help;
+  box-shadow: var(--shadow-sm);
+  letter-spacing: 0.025em;
 }
 
 .info-stats {
   display: flex;
-  gap: 2rem;
-  margin-bottom: 1rem;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--spacing-xs);
 }
 
 .stat-label {
-  font-size: 0.8rem;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .stat-value {
-  font-size: 1.1rem;
-  font-weight: bold;
+  font-size: 1.1875rem;
+  font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .target-word {
   color: var(--accent-color);
   text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 .target-word.debug-word {
   color: #f5576c;
   border-bottom: 2px dashed #f5576c;
-  padding-bottom: 0.2rem;
+  padding-bottom: 0.125rem;
 }
 
 .game-instructions {
   color: var(--text-secondary);
-  font-size: 0.85rem;
-  line-height: 1.6;
-  margin-top: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  margin-top: var(--spacing-md);
+  max-width: 70ch;
 }
 
 @media (max-width: 768px) {
   .info-header h2 {
-    font-size: 1.1rem;
+    font-size: 1.125rem;
   }
   
   .info-stats {
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--spacing-md);
+  }
+  
+  .stat-value {
+    font-size: 1.0625rem;
   }
 }

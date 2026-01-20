@@ -4,40 +4,60 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 1rem;
-  backdrop-filter: blur(4px);
+  padding: var(--spacing-md);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
 }
 
 [data-theme="light"] .faq-modal-overlay {
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
 }
 
 .faq-modal {
   background: var(--modal-bg);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 2rem;
-  max-width: 600px;
+  border-radius: var(--radius-2xl);
+  padding: var(--spacing-2xl);
+  max-width: 640px;
   width: 100%;
-  max-height: 80vh;
+  max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-  animation: slideIn 0.3s ease-out;
+  box-shadow: var(--shadow-xl);
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+}
+
+.faq-modal::-webkit-scrollbar {
+  width: 8px;
+}
+
+.faq-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.faq-modal::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--radius-full);
+}
+
+.faq-modal::-webkit-scrollbar-thumb:hover {
+  background: var(--border-color-hover);
 }
 
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-24px) scale(0.96);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -45,8 +65,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-md);
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -54,59 +74,94 @@
   font-size: 1.75rem;
   margin: 0;
   color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .faq-modal-close {
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  font-size: 2rem;
+  font-size: 1.75rem;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border-radius: var(--radius-md);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   line-height: 1;
+  position: relative;
+}
+
+.faq-modal-close::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  background: var(--hover-bg);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.faq-modal-close:hover::before {
+  opacity: 1;
 }
 
 .faq-modal-close:hover {
-  background: var(--hover-bg);
   color: var(--text-primary);
+  transform: rotate(90deg);
+}
+
+.faq-modal-close:active {
+  transform: rotate(90deg) scale(0.95);
 }
 
 .faq-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--spacing-lg);
 }
 
 .faq-item {
-  padding: 1rem;
-  background: var(--card-bg);
-  border-radius: 12px;
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.faq-item:hover {
+  border-color: var(--border-color-hover);
+  background: var(--bg-tertiary);
 }
 
 .faq-item h3 {
-  font-size: 1.1rem;
-  margin: 0 0 0.75rem 0;
+  font-size: 1.125rem;
+  margin: 0 0 var(--spacing-md) 0;
   color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .faq-item p {
   margin: 0;
   color: var(--text-secondary);
-  line-height: 1.6;
-  font-size: 0.95rem;
+  line-height: 1.7;
+  font-size: 0.9375rem;
+  font-weight: 400;
 }
 
 @media (max-width: 768px) {
   .faq-modal {
-    padding: 1.5rem;
+    padding: var(--spacing-lg);
     max-height: 90vh;
+    border-radius: var(--radius-xl);
+  }
+
+  .faq-modal-header {
+    margin-bottom: var(--spacing-lg);
   }
 
   .faq-modal-header h2 {
@@ -114,14 +169,15 @@
   }
 
   .faq-item {
-    padding: 0.875rem;
+    padding: var(--spacing-md);
   }
 
   .faq-item h3 {
     font-size: 1rem;
+    margin-bottom: var(--spacing-sm);
   }
 
   .faq-item p {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
   }
 }

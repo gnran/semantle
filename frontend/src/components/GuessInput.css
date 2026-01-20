@@ -1,55 +1,82 @@
 .guess-input {
-  margin: 2rem 0;
+  margin: var(--spacing-xl) 0;
 }
 
 .input-container {
   display: flex;
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
 .guess-field {
   flex: 1;
-  padding: 1rem;
-  font-size: 1.1rem;
-  border: 2px solid var(--border-color);
-  border-radius: 8px;
-  transition: border-color 0.3s;
-  background: var(--card-bg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 1.0625rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--bg-secondary);
   color: var(--text-primary);
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 .guess-field::placeholder {
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
+  font-weight: 400;
 }
 
 .guess-field:focus {
   outline: none;
   border-color: var(--accent-color);
-  background: var(--hover-bg);
+  background: var(--bg-tertiary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .guess-field:disabled {
   background: var(--bg-secondary);
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.6;
+  border-color: var(--border-color);
 }
 
 .guess-button {
-  padding: 1rem 2rem;
-  font-size: 1.1rem;
-  font-weight: bold;
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: 1rem;
+  font-weight: 600;
   background: var(--accent-gradient);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  min-width: 120px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 140px;
+  box-shadow: var(--shadow-md);
+  letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+}
+
+.guess-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.guess-button:hover:not(:disabled)::before {
+  opacity: 1;
 }
 
 .guess-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--shadow-lg), var(--shadow-glow);
+}
+
+.guess-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-md);
 }
 
 .guess-button:disabled {
@@ -57,14 +84,23 @@
   cursor: not-allowed;
   transform: none;
   opacity: 0.5;
+  box-shadow: none;
+  color: var(--text-tertiary);
 }
 
 @media (max-width: 768px) {
   .input-container {
     flex-direction: column;
+    gap: var(--spacing-md);
   }
   
   .guess-button {
     width: 100%;
+    min-width: unset;
+  }
+  
+  .guess-field {
+    font-size: 1rem;
+    padding: var(--spacing-md);
   }
 }

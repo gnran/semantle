@@ -1,96 +1,128 @@
 .guess-list {
-  margin-top: 2rem;
+  margin-top: var(--spacing-xl);
 }
 
 .guess-list-empty {
   text-align: center;
-  padding: 3rem;
-  color: var(--text-secondary);
+  padding: var(--spacing-2xl);
+  color: var(--text-tertiary);
   font-style: italic;
+  font-size: 0.9375rem;
 }
 
 .target-word-row {
   display: grid;
   grid-template-columns: 60px 1fr 120px 150px;
-  gap: 1rem;
-  padding: 1rem 0.75rem;
-  background: var(--card-bg);
-  border-radius: 8px;
-  margin-bottom: 1rem;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-md);
   align-items: center;
-  border: 2px solid var(--border-color);
+  border: 1.5px solid var(--accent-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .target-word-number {
-  font-weight: bold;
-  color: var(--text-primary);
+  font-weight: 700;
+  color: var(--accent-color);
   text-align: center;
+  font-size: 1rem;
 }
 
 .target-word-text {
-  font-size: 1.1rem;
+  font-size: 1.125rem;
   color: var(--text-primary);
-  font-weight: 500;
+  font-weight: 700;
   text-transform: capitalize;
+  letter-spacing: -0.01em;
 }
 
 .target-word-similarity {
   text-align: right;
-  font-weight: bold;
+  font-weight: 700;
   color: var(--text-primary);
-  font-size: 1.1rem;
+  font-size: 1.0625rem;
 }
 
 .target-word-proximity {
   text-align: right;
-  font-weight: bold;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
 .proximity-flag {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
 }
 
 .sort-indicator {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  padding-left: 0.75rem;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+  margin-bottom: var(--spacing-sm);
+  padding-left: var(--spacing-lg);
+  font-weight: 500;
 }
 
 .guess-list-title {
   font-size: 1.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-md);
   color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .guess-list-header {
   display: grid;
   grid-template-columns: 60px 1fr 120px 150px;
-  gap: 1rem;
-  padding: 0.75rem;
-  background: var(--card-bg);
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 0.9rem;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: 0.875rem;
   color: var(--text-secondary);
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--spacing-sm);
   border-bottom: 1px solid var(--border-color);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .guess-items {
   max-height: 600px;
   overflow-y: auto;
+  border-radius: var(--radius-lg);
+}
+
+.guess-items::-webkit-scrollbar {
+  width: 8px;
+}
+
+.guess-items::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.guess-items::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--radius-full);
+}
+
+.guess-items::-webkit-scrollbar-thumb:hover {
+  background: var(--border-color-hover);
 }
 
 .guess-item {
   display: grid;
   grid-template-columns: 60px 1fr 120px 150px;
-  gap: 1rem;
-  padding: 0.75rem;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--border-color);
   align-items: center;
-  transition: background 0.2s;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.guess-item:last-child {
+  border-bottom: none;
 }
 
 .guess-item:hover {
@@ -98,28 +130,32 @@
 }
 
 .guess-item.correct {
-  background: rgba(102, 126, 234, 0.1);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
   border-left: 3px solid var(--accent-color);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
 
 .guess-rank {
-  font-weight: bold;
+  font-weight: 600;
   color: var(--text-secondary);
   text-align: center;
-  font-size: 0.95rem;
+  font-size: 0.9375rem;
 }
 
 .guess-word {
   font-size: 1rem;
   color: var(--text-primary);
   text-transform: capitalize;
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 .guess-similarity {
   text-align: right;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .guess-proximity {
@@ -130,16 +166,18 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
   min-height: 24px;
-  padding-right: 0.5rem;
+  padding-right: var(--spacing-sm);
 }
 
 .proximity-value {
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   z-index: 2;
   position: relative;
   white-space: nowrap;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .proximity-bar {
@@ -147,32 +185,38 @@
   right: 0;
   top: 50%;
   transform: translateY(-50%);
-  height: 20px;
+  height: 22px;
   width: 100%;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   z-index: 0;
-  opacity: 0.25;
+  opacity: 0.2;
+  transition: opacity 0.2s ease;
+}
+
+.guess-item:hover .proximity-bar {
+  opacity: 0.3;
 }
 
 .proximity-bar.high {
-  background: #4ade80;
+  background: var(--success-color);
 }
 
 .proximity-bar.low {
-  background: #6b7280;
+  background: var(--text-tertiary);
 }
 
 .proximity-text {
-  font-size: 0.9rem;
-  color: #9ca3af;
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
 }
 
 .proximity-text.cold {
-  color: #6b7280;
+  color: var(--text-tertiary);
 }
 
 .proximity-text.tepid {
-  color: #9ca3af;
+  color: var(--text-secondary);
 }
 
 @media (max-width: 768px) {
@@ -180,11 +224,16 @@
   .guess-item,
   .target-word-row {
     grid-template-columns: 50px 1fr 80px 100px;
-    font-size: 0.85rem;
-    gap: 0.5rem;
+    font-size: 0.875rem;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
   }
   
   .proximity-value {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+  }
+  
+  .guess-list-title {
+    font-size: 1.25rem;
   }
 }
