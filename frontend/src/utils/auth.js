@@ -60,112 +60,80 @@ export async function connectFarcaster() {
     const fid = context.user.fid
     const username = context.user.username || null
     
-    // Log Farcaster context for debugging
-    console.log('=== Farcaster Context ===')
-    console.log('FID:', fid)
-    console.log('Username:', username)
-    console.log('Available user fields:', Object.keys(context.user))
-    console.log('Full context keys:', Object.keys(context))
-    console.log('========================')
-    
-    // Check if Quick Auth is available (for future use)
-    if (sdk.quickAuth) {
-      console.log('Quick Auth available:', !!sdk.quickAuth)
-      console.log('Quick Auth methods:', Object.keys(sdk.quickAuth || {}))
-    }
-    
-    // Try to get wallet address using Farcaster SDK's wallet provider
-    // According to Base docs: https://docs.base.org/mini-apps/core-concepts/authentication
-    // Wallet addresses must be obtained through the wallet provider
+    // Try to get wallet address using Farcaster SDK's wallet methods
     let address = null
-    let walletSource = null
-    
-    // Check if wallet methods are available
-    console.log('=== Checking Farcaster Wallet Provider ===')
-    console.log('sdk.wallet exists:', !!sdk.wallet)
-    if (sdk.wallet) {
-      console.log('sdk.wallet methods:', Object.keys(sdk.wallet))
-      console.log('getEthereumProvider exists:', typeof sdk.wallet.getEthereumProvider === 'function')
-    }
     
     try {
       // Method 1: Try to get Ethereum provider from Farcaster SDK
+      // Check if wallet methods are available
       if (sdk.wallet && typeof sdk.wallet.getEthereumProvider === 'function') {
-        console.log('Getting Farcaster Ethereum provider...')
         const farcasterProvider = sdk.wallet.getEthereumProvider()
-        console.log('Provider obtained:', !!farcasterProvider)
-        console.log('Provider type:', typeof farcasterProvider)
-        
-        if (farcasterProvider) {
-          // Check if provider has request method (EIP-1193 standard)
-          if (typeof farcasterProvider.request === 'function') {
-            try {
-              // First try to get existing accounts (might already be connected)
-              console.log('Requesting eth_accounts (checking for connected wallet)...')
-              const accounts = await farcasterProvider.request({ method: 'eth_accounts' })
-              console.log('eth_accounts result:', accounts)
-              
-              if (accounts && accounts.length > 0) {
-                address = accounts[0]
-                walletSource = 'farcaster'
-                console.log('✅ Found Farcaster wallet address:', address)
-              } else {
-                // If no accounts, request connection (this will prompt user)
-                console.log('No wallet connected, requesting connection via eth_requestAccounts...')
-                try {
-                  const requestedAccounts = await farcasterProvider.request({ method: 'eth_requestAccounts' })
-                  console.log('eth_requestAccounts result:', requestedAccounts)
-                  
-                  if (requestedAccounts && requestedAccounts.length > 0) {
-                    address = requestedAccounts[0]
-                    walletSource = 'farcaster'
-                    console.log('✅ Connected Farcaster wallet address:', address)
-                  } else {
-                    console.log('⚠️ No accounts returned from eth_requestAccounts')
-                  }
-                } catch (requestErr) {
-                  console.log('⚠️ User rejected wallet connection or error:', requestErr.message)
-                }
-              }
-            } catch (err) {
-              console.log('❌ Farcaster wallet request failed:', err.message)
-              console.error('Error details:', err)
-            }
-          } else {
-            // Try alternative provider methods
-            console.log('Provider does not have request method, checking for alternative methods...')
-            if (typeof farcasterProvider.send === 'function') {
-              console.log('Provider has send method, trying alternative approach...')
-              try {
-                const result = await farcasterProvider.send('eth_accounts', [])
-                if (result && result.length > 0) {
-                  address = result[0]
-                  walletSource = 'farcaster'
-                  console.log('✅ Found address via send method:', address)
-                }
-              } catch (err) {
-                console.log('Alternative send method failed:', err.message)
+        if (farcasterProvider && typeof farcasterProvider.request === 'function') {
+          try {
+            // First try to get existing accounts (might already be connected)
+            const accounts = await farcasterProvider.request({ method: 'eth_accounts' })
+            if (accounts && accounts.length > 0) {
+              address = accounts[0]
+            } else {
+              // If no accounts, request connection
+              const requestedAccounts = await farcasterProvider.request({ method: 'eth_requestAccounts' })
+              if (requestedAccounts && requestedAccounts.length > 0) {
+                address = requestedAccounts[0]
               }
             }
+          } catch (err) {
+            console.log('Farcaster wallet connection failed:', err.message)
           }
-        } else {
-          console.log('⚠️ getEthereumProvider returned null/undefined')
         }
-      } else {
-        console.log('⚠️ sdk.wallet.getEthereumProvider is not available')
       }
     } catch (err) {
-      console.log('❌ Farcaster wallet provider error:', err.message)
-      console.error('Error details:', err)
+      console.log('Farcaster wallet provider not available:', err.message)
     }
     
-    console.log('=== Wallet Provider Check Complete ===')
-    console.log('Final address:', address)
-    console.log('Wallet source:', walletSource)
-    console.log('=====================================')
+    // Method 2: Try Base Account SDK (this is the primary method for Base mini apps)
+    // For Farcaster login in Base mini apps, we should still try to connect wallet
+    if (!address) {
+      try {
+        // Initialize SDK if not already done
+        if (!isInitialized) {
+          initializeAuth()
+        }
+        
+        if (provider) {
+          // First try to get existing accounts (might already be connected)
+          const accounts = await provider.request({ method: 'eth_accounts' })
+          if (accounts && accounts.length > 0) {
+            address = accounts[0]
+          } else {
+            // If no accounts, actively request wallet connection
+            // This will prompt the user to connect their wallet
+            try {
+              const requestedAccounts = await provider.request({ method: 'eth_requestAccounts' })
+              if (requestedAccounts && requestedAccounts.length > 0) {
+                address = requestedAccounts[0]
+              }
+            } catch (requestErr) {
+              // User might have rejected the connection, that's okay
+              console.log('Wallet connection rejected or unavailable')
+            }
+          }
+        }
+      } catch (err) {
+        // Wallet not available, that's okay for Farcaster login
+        console.log('Base Account SDK wallet not available:', err.message)
+      }
+    }
     
-    // Note: Farcaster context does NOT contain wallet address fields
-    // Wallet addresses must be obtained through sdk.wallet.getEthereumProvider()
+    // Method 3: Try to get address from Farcaster context fields (fallback)
+    if (!address && context.user) {
+      if (context.user.custodyAddress) {
+        address = context.user.custodyAddress
+      } else if (context.user.verifiedAddresses && context.user.verifiedAddresses.length > 0) {
+        address = context.user.verifiedAddresses[0]
+      } else if (context.user.walletAddress) {
+        address = context.user.walletAddress
+      }
+    }
 
     // Store auth state
     const authState = {
@@ -174,7 +142,6 @@ export async function connectFarcaster() {
       address: address || null,
       connected: true,
       loginMethod: 'farcaster',
-      walletSource: walletSource,
       connectedAt: Date.now()
     }
 
@@ -233,7 +200,6 @@ export async function connectWallet() {
       username,
       connected: true,
       loginMethod: 'coinbase',
-      walletSource: 'coinbase',
       connectedAt: Date.now()
     }
 
@@ -274,12 +240,10 @@ export async function getAuthState() {
             // Update username if available
             authState.username = context.user.username || authState.username
             
-            // Try to get/update wallet address using Farcaster SDK wallet provider
-            // Note: Wallet addresses are NOT available in context - must use wallet provider
+            // Try to get/update wallet address using Farcaster SDK wallet methods
             let address = null
-            let walletSource = null
             
-            // Try Farcaster SDK wallet provider (only way to get wallet address)
+            // Method 1: Try Farcaster SDK wallet provider
             try {
               if (sdk.wallet && typeof sdk.wallet.getEthereumProvider === 'function') {
                 const farcasterProvider = sdk.wallet.getEthereumProvider()
@@ -287,24 +251,44 @@ export async function getAuthState() {
                   const accounts = await farcasterProvider.request({ method: 'eth_accounts' })
                   if (accounts && accounts.length > 0) {
                     address = accounts[0]
-                    walletSource = 'farcaster'
-                    console.log('getAuthState: Found Farcaster wallet address:', address)
-                  } else {
-                    console.log('getAuthState: No Farcaster wallet connected')
                   }
                 }
               }
             } catch (err) {
-              console.log('getAuthState: Farcaster wallet not available:', err.message)
+              // Farcaster wallet not available
             }
             
-            // Note: Farcaster context does NOT contain wallet address fields
-            // (custodyAddress, verifiedAddresses, walletAddress don't exist in context)
+            // Method 2: Try Base Account SDK if not found
+            if (!address) {
+              try {
+                if (!isInitialized) {
+                  initializeAuth()
+                }
+                if (provider) {
+                  const accounts = await provider.request({ method: 'eth_accounts' })
+                  if (accounts && accounts.length > 0) {
+                    address = accounts[0]
+                  }
+                }
+              } catch (err) {
+                // Wallet not connected, that's okay
+              }
+            }
+            
+            // Method 3: Try context fields as fallback
+            if (!address && context.user) {
+              if (context.user.custodyAddress) {
+                address = context.user.custodyAddress
+              } else if (context.user.verifiedAddresses && context.user.verifiedAddresses.length > 0) {
+                address = context.user.verifiedAddresses[0]
+              } else if (context.user.walletAddress) {
+                address = context.user.walletAddress
+              }
+            }
             
             // Update address if found
             if (address && address !== authState.address) {
               authState.address = address
-              authState.walletSource = walletSource
             }
             
             localStorage.setItem('semantle_auth', JSON.stringify(authState))
