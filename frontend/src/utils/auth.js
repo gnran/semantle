@@ -60,6 +60,15 @@ export async function connectFarcaster() {
     const fid = context.user.fid
     const username = context.user.username || null
     
+    // Log Farcaster context fields for debugging
+    console.log('=== Farcaster Context Fields ===')
+    console.log('Full context:', context)
+    console.log('User object:', context.user)
+    console.log('custodyAddress:', context.user.custodyAddress)
+    console.log('verifiedAddresses:', context.user.verifiedAddresses)
+    console.log('walletAddress:', context.user.walletAddress)
+    console.log('================================')
+    
     // Try to get wallet address using Farcaster SDK's wallet methods
     let address = null
     let walletSource = null
@@ -94,15 +103,25 @@ export async function connectFarcaster() {
     
     // Method 2: Try to get address from Farcaster context fields (fallback)
     if (!address && context.user) {
+      console.log('Checking Farcaster context fields for address...')
+      console.log('custodyAddress:', context.user.custodyAddress)
+      console.log('verifiedAddresses:', context.user.verifiedAddresses)
+      console.log('walletAddress:', context.user.walletAddress)
+      
       if (context.user.custodyAddress) {
         address = context.user.custodyAddress
         walletSource = 'farcaster_context'
+        console.log('Using custodyAddress:', address)
       } else if (context.user.verifiedAddresses && context.user.verifiedAddresses.length > 0) {
         address = context.user.verifiedAddresses[0]
         walletSource = 'farcaster_context'
+        console.log('Using verifiedAddresses[0]:', address)
       } else if (context.user.walletAddress) {
         address = context.user.walletAddress
         walletSource = 'farcaster_context'
+        console.log('Using walletAddress:', address)
+      } else {
+        console.log('No address found in Farcaster context fields')
       }
     }
 
@@ -213,6 +232,13 @@ export async function getAuthState() {
             // Update username if available
             authState.username = context.user.username || authState.username
             
+            // Log Farcaster context fields for debugging
+            console.log('=== getAuthState: Farcaster Context Fields ===')
+            console.log('custodyAddress:', context.user.custodyAddress)
+            console.log('verifiedAddresses:', context.user.verifiedAddresses)
+            console.log('walletAddress:', context.user.walletAddress)
+            console.log('===============================================')
+            
             // Try to get/update wallet address using Farcaster SDK wallet methods
             let address = null
             let walletSource = null
@@ -235,15 +261,25 @@ export async function getAuthState() {
             
             // Method 2: Try context fields as fallback (Farcaster addresses)
             if (!address && context.user) {
+              console.log('getAuthState: Checking Farcaster context fields for address...')
+              console.log('custodyAddress:', context.user.custodyAddress)
+              console.log('verifiedAddresses:', context.user.verifiedAddresses)
+              console.log('walletAddress:', context.user.walletAddress)
+              
               if (context.user.custodyAddress) {
                 address = context.user.custodyAddress
                 walletSource = 'farcaster_context'
+                console.log('getAuthState: Using custodyAddress:', address)
               } else if (context.user.verifiedAddresses && context.user.verifiedAddresses.length > 0) {
                 address = context.user.verifiedAddresses[0]
                 walletSource = 'farcaster_context'
+                console.log('getAuthState: Using verifiedAddresses[0]:', address)
               } else if (context.user.walletAddress) {
                 address = context.user.walletAddress
                 walletSource = 'farcaster_context'
+                console.log('getAuthState: Using walletAddress:', address)
+              } else {
+                console.log('getAuthState: No address found in Farcaster context fields')
               }
             }
             
