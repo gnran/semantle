@@ -1,79 +1,114 @@
 /**
  * Smart Contract Integration Utility
  * Handles interaction with SemantleStats contract on Base blockchain
+ * Uses Wagmi for Base Account integration
  */
 
-import { ethers } from 'ethers';
+import { isAddress } from 'viem';
+import { readContract, writeContract, waitForTransactionReceipt } from '@wagmi/core';
+import { config } from '../providers/WagmiProvider';
 
 // Contract ABI (Application Binary Interface)
 const CONTRACT_ABI = [
-  "function submitGame(uint16 attempts) external",
-  "function getUserStats(address user) external view returns (tuple(uint256 totalGames, uint256 totalAttempts, uint256 bestScore, uint256 lastUpdated) stats, uint256 avgAttempts)",
-  "function userStats(address) external view returns (uint256 totalGames, uint256 totalAttempts, uint256 bestScore, uint256 lastUpdated)",
-  "function deployer() external view returns (address)",
-  "event GameSubmitted(address indexed user, uint16 attempts, uint256 totalGames, uint256 totalAttempts, uint256 bestScore, uint256 timestamp)",
-  "event FundsForwarded(address indexed from, address indexed to, uint256 amount)"
+  {
+    name: 'submitGame',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'attempts', type: 'uint16' }],
+    outputs: [],
+  },
+  {
+    name: 'getUserStats',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'user', type: 'address' }],
+    outputs: [
+      {
+        name: 'stats',
+        type: 'tuple',
+        components: [
+          { name: 'totalGames', type: 'uint256' },
+          { name: 'totalAttempts', type: 'uint256' },
+          { name: 'bestScore', type: 'uint256' },
+          { name: 'lastUpdated', type: 'uint256' },
+        ],
+      },
+      { name: 'avgAttempts', type: 'uint256' },
+    ],
+  },
+  {
+    name: 'userStats',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: '', type: 'address' }],
+    outputs: [
+      { name: 'totalGames', type: 'uint256' },
+      { name: 'totalAttempts', type: 'uint256' },
+      { name: 'bestScore', type: 'uint256' },
+      { name: 'lastUpdated', type: 'uint256' },
+    ],
+  },
+  {
+    name: 'deployer',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'address' }],
+  },
 ];
 
 // Contract address - set via environment variable
 const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '';
 
 /**
- * Get contract instance
- * @param {ethers.Provider} provider - Ethereum provider
- * @param {ethers.Signer} signer - Ethereum signer (optional, for write operations)
- * @returns {ethers.Contract} Contract instance
- */
-export function getContract(provider, signer = null) {
-  if (!CONTRACT_ADDRESS) {
-    throw new Error('Contract address not set. Please set VITE_CONTRACT_ADDRESS environment variable.');
-  }
-  
-  const contractProvider = signer || provider;
-  return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, contractProvider);
-}
-
-/**
- * Submit game result to blockchain
+ * Submit game result to blockchain using Base Account
  * @param {number} attempts - Number of attempts used in the game
- * @param {ethers.Signer} signer - Ethereum signer (must be connected)
+ * @param {string} account - User's account address (from useAccount hook)
  * @returns {Promise<Object>} Transaction object with hash and receipt
  */
-export async function submitGameToChain(attempts, signer) {
+export async function submitGameToChain(attempts, account) {
   try {
-    if (!signer) {
-      throw new Error('Signer is required for submitting games');
+    if (!account) {
+      throw new Error('Account is required for submitting games');
     }
 
     if (attempts <= 0 || attempts > 65535) {
       throw new Error('Attempts must be between 1 and 65535');
     }
 
-    const contract = getContract(signer.provider, signer);
-    
-    // Submit the game
-    const tx = await contract.submitGame(attempts);
-    
+    if (!CONTRACT_ADDRESS) {
+      throw new Error('Contract address not set. Please set VITE_CONTRACT_ADDRESS environment variable.');
+    }
+
+    // Submit the game using Wagmi writeContract
+    const hash = await writeContract(config, {
+      address: CONTRACT_ADDRESS,
+      abi: CONTRACT_ABI,
+      functionName: 'submitGame',
+      args: [attempts],
+      account,
+    });
+
     // Wait for transaction confirmation
-    const receipt = await tx.wait();
-    
+    const receipt = await waitForTransactionReceipt(config, { hash });
+
     return {
-      hash: tx.hash,
+      hash,
       receipt,
-      success: receipt.status === 1
+      success: receipt.status === 'success',
     };
   } catch (error) {
     console.error('Error submitting game to chain:', error);
-    
+
     // Provide user-friendly error messages
-    if (error.code === 'ACTION_REJECTED') {
+    if (error.code === 'ACTION_REJECTED' || error.message?.includes('User rejected')) {
       throw new Error('Transaction was rejected by user');
-    } else if (error.code === 'INSUFFICIENT_FUNDS') {
+    } else if (error.code === 'INSUFFICIENT_FUNDS' || error.message?.includes('insufficient funds')) {
       throw new Error('Insufficient funds for gas');
-    } else if (error.message.includes('Attempts must be > 0')) {
+    } else if (error.message?.includes('Attempts must be > 0')) {
       throw new Error('Invalid number of attempts');
     }
-    
+
     throw error;
   }
 }
@@ -81,18 +116,30 @@ export async function submitGameToChain(attempts, signer) {
 /**
  * Get user stats from blockchain
  * @param {string} walletAddress - User's wallet address
- * @param {ethers.Provider} provider - Ethereum provider
  * @returns {Promise<Object>} User stats object
  */
-export async function getStatsFromChain(walletAddress, provider) {
+export async function getStatsFromChain(walletAddress) {
   try {
-    if (!walletAddress || !ethers.isAddress(walletAddress)) {
+    if (!walletAddress || !isAddress(walletAddress)) {
       throw new Error('Invalid wallet address');
     }
 
-    const contract = getContract(provider);
-    const [stats, avgAttemptsX100] = await contract.getUserStats(walletAddress);
-    
+    if (!CONTRACT_ADDRESS) {
+      throw new Error('Contract address not set. Please set VITE_CONTRACT_ADDRESS environment variable.');
+    }
+
+    const result = await readContract(config, {
+      address: CONTRACT_ADDRESS,
+      abi: CONTRACT_ABI,
+      functionName: 'getUserStats',
+      args: [walletAddress],
+    });
+
+    // result is [stats object, avgAttempts]
+    // stats is an object with properties: totalGames, totalAttempts, bestScore, lastUpdated
+    const stats = result[0];
+    const avgAttemptsX100 = result[1];
+
     // Convert from blockchain format to frontend format
     return {
       walletAddress: walletAddress,
@@ -100,23 +147,23 @@ export async function getStatsFromChain(walletAddress, provider) {
       totalAttempts: Number(stats.totalAttempts),
       averageAttempts: Number(avgAttemptsX100) / 100, // Convert from fixed point
       bestScore: Number(stats.bestScore),
-      lastUpdated: stats.lastUpdated > 0 ? new Date(Number(stats.lastUpdated) * 1000) : null
+      lastUpdated: Number(stats.lastUpdated) > 0 ? new Date(Number(stats.lastUpdated) * 1000) : null,
     };
   } catch (error) {
     console.error('Error getting stats from chain:', error);
-    
+
     // Return empty stats if user doesn't exist on chain
-    if (error.message.includes('revert') || error.message.includes('execution reverted')) {
+    if (error.message?.includes('revert') || error.message?.includes('execution reverted')) {
       return {
         walletAddress: walletAddress,
         totalGames: 0,
         totalAttempts: 0,
         averageAttempts: 0,
         bestScore: 0,
-        lastUpdated: null
+        lastUpdated: null,
       };
     }
-    
+
     throw error;
   }
 }
@@ -124,12 +171,11 @@ export async function getStatsFromChain(walletAddress, provider) {
 /**
  * Check if user has stats on blockchain
  * @param {string} walletAddress - User's wallet address
- * @param {ethers.Provider} provider - Ethereum provider
  * @returns {Promise<boolean>} True if user has stats
  */
-export async function hasStatsOnChain(walletAddress, provider) {
+export async function hasStatsOnChain(walletAddress) {
   try {
-    const stats = await getStatsFromChain(walletAddress, provider);
+    const stats = await getStatsFromChain(walletAddress);
     return stats.totalGames > 0;
   } catch (error) {
     return false;
@@ -149,5 +195,5 @@ export function getContractAddress() {
  * @returns {boolean} True if contract address is set
  */
 export function isContractConfigured() {
-  return CONTRACT_ADDRESS !== '' && ethers.isAddress(CONTRACT_ADDRESS);
+  return CONTRACT_ADDRESS !== '' && isAddress(CONTRACT_ADDRESS);
 }

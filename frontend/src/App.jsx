@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import { useAccount } from 'wagmi'
 import { sdk } from '@farcaster/miniapp-sdk'
-import { BrowserProvider } from 'ethers'
 import Game from './components/Game'
 import Stats from './components/Stats'
 import Header from './components/Header'
@@ -16,50 +16,29 @@ function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [showFAQModal, setShowFAQModal] = useState(false)
   const [showProfileModal, setShowProfileModal] = useState(false)
+  
+  // Get account from Wagmi (Base Account)
+  const { address: walletAddress, isConnected } = useAccount()
 
   // Notify SDK that app is ready
   useEffect(() => {
     sdk.actions.ready()
   }, [])
 
-  // Get user data from Context API and Wallet (exactly like Wordle)
+  // Get user data from Farcaster Context API
+  // Base Account is automatically connected via Wagmi
   useEffect(() => {
     async function fetchUserInfo() {
       try {
         const context = await sdk.context
         const user = context.user
-        
-        let walletAddress = null
-        try {
-          const provider = await sdk.wallet.getEthereumProvider()
-          if (provider) {
-            // First try to get already connected accounts (without requesting permission)
-            let accounts = await provider.request({ method: 'eth_accounts' })
-            
-            // If no accounts, try to request (may show user prompt)
-            if (!accounts || accounts.length === 0) {
-              try {
-                accounts = await provider.request({ method: 'eth_requestAccounts' })
-              } catch (requestError) {
-                // User may reject the request - this is normal
-                console.log('User did not provide wallet access')
-              }
-            }
-            
-            if (accounts && accounts.length > 0) {
-              walletAddress = accounts[0]
-            }
-          }
-        } catch (error) {
-          console.warn('Failed to get wallet address:', error)
-        }
 
         const newUserInfo = {
           fid: user.fid,
           username: user.username,
           displayName: user.displayName,
           pfpUrl: user.pfpUrl,
-          walletAddress
+          walletAddress: walletAddress || null
         }
 
         setUserInfo(newUserInfo)
@@ -74,7 +53,7 @@ function App() {
     }
 
     fetchUserInfo()
-  }, [])
+  }, [walletAddress])
 
   const handleLogout = () => {
     // Clear user info (in Wordle, logout just closes modal)

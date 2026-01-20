@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
+import { useAccount } from 'wagmi'
 import GuessInput from './GuessInput'
 import GuessList from './GuessList'
 import GameInfo from './GameInfo'
 import { getUserId } from '../utils/userId'
-import { sdk } from '@farcaster/miniapp-sdk'
-import { BrowserProvider } from 'ethers'
 import { submitGameToChain, isContractConfigured } from '../utils/contract'
 import './Game.css'
 
@@ -42,6 +41,9 @@ function Game({ sessionId, setSessionId }) {
   const [showTransactionPrompt, setShowTransactionPrompt] = useState(false)
   const [transactionStatus, setTransactionStatus] = useState(null) // 'pending', 'success', 'error'
   const [transactionError, setTransactionError] = useState(null)
+  
+  // Get account from Wagmi (Base Account)
+  const { address: account, isConnected } = useAccount()
 
   const saveGameState = (session, guessesList) => {
     try {
@@ -253,38 +255,14 @@ function Game({ sessionId, setSessionId }) {
         throw new Error('Contract not configured. Please set VITE_CONTRACT_ADDRESS environment variable.')
       }
 
-      // Get provider from Farcaster SDK (like Wordle)
-      const provider = await sdk.wallet.getEthereumProvider()
-      if (!provider) {
-        throw new Error('Wallet provider not available. Please ensure your wallet is connected.')
+      // Check if Base Account is connected
+      if (!isConnected || !account) {
+        throw new Error('Base Account not connected. Please ensure you are logged in.')
       }
 
-      // Get wallet address
-      let accounts = await provider.request({ method: 'eth_accounts' })
-      if (!accounts || accounts.length === 0) {
-        try {
-          accounts = await provider.request({ method: 'eth_requestAccounts' })
-        } catch (requestError) {
-          throw new Error('Wallet not connected. Please connect your wallet to submit stats.')
-        }
-      }
-
-      if (!accounts || accounts.length === 0) {
-        throw new Error('No wallet accounts available')
-      }
-
-      // Wrap provider in BrowserProvider (like Wordle)
-      const browserProvider = new BrowserProvider(provider)
-      
-      // Get signer from provider
-      const signer = await browserProvider.getSigner()
-      if (!signer) {
-        throw new Error('Unable to get signer. Please ensure your wallet is connected and unlocked.')
-      }
-
-      // Submit game to blockchain
+      // Submit game to blockchain using Base Account
       const attempts = guesses.length
-      const result = await submitGameToChain(attempts, signer)
+      const result = await submitGameToChain(attempts, account)
 
       if (result.success) {
         setTransactionStatus('success')

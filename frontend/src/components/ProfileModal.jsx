@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { sdk } from '@farcaster/miniapp-sdk'
-import { BrowserProvider } from 'ethers'
 import { getStatsFromChain, isContractConfigured } from '../utils/contract'
 import './ProfileModal.css'
 
@@ -23,14 +21,8 @@ function ProfileModal({ isOpen, onClose, userInfo, onLogout }) {
 
     setIsLoading(true)
     try {
-      // Get provider from Farcaster SDK (like Wordle)
-      const provider = await sdk.wallet.getEthereumProvider()
-      if (!provider) {
-        throw new Error('Provider not available')
-      }
-
-      const browserProvider = new BrowserProvider(provider)
-      const blockchainStats = await getStatsFromChain(userInfo.walletAddress, browserProvider)
+      // Get stats from blockchain using Base Account
+      const blockchainStats = await getStatsFromChain(userInfo.walletAddress)
       
       // Map blockchain stats to display format
       setStats({
