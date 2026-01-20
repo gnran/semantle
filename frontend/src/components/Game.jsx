@@ -202,17 +202,12 @@ function Game({ sessionId, setSessionId }) {
           console.error('Error saving stats:', err)
         }
 
-        // Show transaction prompt if contract is configured and user has wallet
-        try {
-          const authState = await getAuthState()
-          if (authState.address && isContractConfigured()) {
-            setShowTransactionPrompt(true)
-            setTransactionStatus(null)
-            setTransactionError(null)
-          }
-        } catch (err) {
-          console.error('Error checking auth state:', err)
-        }
+        // Always show transaction prompt when game completes
+        // Wallet and contract checks happen when user clicks submit
+        console.log('Game completed - showing transaction prompt')
+        setShowTransactionPrompt(true)
+        setTransactionStatus(null)
+        setTransactionError(null)
       } else {
         // Update session attempts count
         updatedSession = {
@@ -252,24 +247,29 @@ function Game({ sessionId, setSessionId }) {
     setTransactionError(null)
 
     try {
+      // Check if contract is configured
+      if (!isContractConfigured()) {
+        throw new Error('Contract not configured. Please set VITE_CONTRACT_ADDRESS environment variable.')
+      }
+
+      // Check if user has wallet connected
       const authState = await getAuthState()
       if (!authState.address) {
         throw new Error('Wallet not connected. Please connect your wallet to submit stats.')
-      }
-
-      if (!isContractConfigured()) {
-        throw new Error('Contract not configured')
       }
 
       // Initialize auth and get provider
       initializeAuth()
       const provider = await getProvider()
       if (!provider) {
-        throw new Error('Provider not available')
+        throw new Error('Provider not available. Please ensure your wallet is connected.')
       }
 
       // Get signer from provider
       const signer = await provider.getSigner()
+      if (!signer) {
+        throw new Error('Unable to get signer. Please ensure your wallet is connected and unlocked.')
+      }
 
       // Submit game to blockchain
       const attempts = guesses.length
