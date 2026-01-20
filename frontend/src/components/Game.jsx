@@ -5,7 +5,7 @@ import GuessList from './GuessList'
 import GameInfo from './GameInfo'
 import { getUserId } from '../utils/userId'
 import { submitGameToChain, isContractConfigured } from '../utils/contract'
-import { getAuthState, initializeAuth, getProvider } from '../utils/auth'
+import { getAuthState, getProvider } from '../utils/auth'
 import './Game.css'
 
 // Use environment variable for API URL, fallback to '/api' for local development
@@ -258,8 +258,7 @@ function Game({ sessionId, setSessionId }) {
         throw new Error('Wallet not connected. Please connect your wallet to submit stats.')
       }
 
-      // Initialize auth and get provider
-      initializeAuth()
+      // Get provider from Farcaster SDK
       const provider = await getProvider()
       if (!provider) {
         throw new Error('Provider not available. Please ensure your wallet is connected.')

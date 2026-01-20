@@ -6,7 +6,7 @@ import Header from './components/Header'
 import LoadingScreen from './components/LoadingScreen'
 import FAQModal from './components/FAQModal'
 import ProfileModal from './components/ProfileModal'
-import { initializeAuth, getAuthState, connectWallet, connectFarcaster, isAuthenticated } from './utils/auth'
+import { getAuthState, connectWallet, connectFarcaster, isAuthenticated } from './utils/auth'
 import './App.css'
 
 function App() {
@@ -32,13 +32,6 @@ function App() {
     setConnectionMessage('Initializing...')
     
     try {
-      // Initialize Base Account SDK
-      try {
-        initializeAuth()
-      } catch (error) {
-        console.error('Failed to initialize auth:', error)
-      }
-
       // Check existing auth state first
       setConnectionMessage('Checking authentication...')
       const existingState = await getAuthState()
@@ -101,6 +94,8 @@ function App() {
           const state = {
             fid: context.user.fid,
             username: context.user.username,
+            displayName: context.user.displayName,
+            pfpUrl: context.user.pfpUrl,
             address: null,
             connected: true,
             loginMethod: 'farcaster',
