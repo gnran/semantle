@@ -4,8 +4,9 @@ import GuessInput from './GuessInput'
 import GuessList from './GuessList'
 import GameInfo from './GameInfo'
 import { getUserId } from '../utils/userId'
+import { sdk } from '@farcaster/miniapp-sdk'
+import { BrowserProvider } from 'ethers'
 import { submitGameToChain, isContractConfigured } from '../utils/contract'
-import { getAuthState, getProvider } from '../utils/auth'
 import './Game.css'
 
 // Use environment variable for API URL, fallback to '/api' for local development
@@ -252,20 +253,31 @@ function Game({ sessionId, setSessionId }) {
         throw new Error('Contract not configured. Please set VITE_CONTRACT_ADDRESS environment variable.')
       }
 
-      // Check if user has wallet connected
-      const authState = await getAuthState()
-      if (!authState.address) {
-        throw new Error('Wallet not connected. Please connect your wallet to submit stats.')
-      }
-
-      // Get provider from Farcaster SDK
-      const provider = await getProvider()
+      // Get provider from Farcaster SDK (like Wordle)
+      const provider = await sdk.wallet.getEthereumProvider()
       if (!provider) {
-        throw new Error('Provider not available. Please ensure your wallet is connected.')
+        throw new Error('Wallet provider not available. Please ensure your wallet is connected.')
       }
 
+      // Get wallet address
+      let accounts = await provider.request({ method: 'eth_accounts' })
+      if (!accounts || accounts.length === 0) {
+        try {
+          accounts = await provider.request({ method: 'eth_requestAccounts' })
+        } catch (requestError) {
+          throw new Error('Wallet not connected. Please connect your wallet to submit stats.')
+        }
+      }
+
+      if (!accounts || accounts.length === 0) {
+        throw new Error('No wallet accounts available')
+      }
+
+      // Wrap provider in BrowserProvider (like Wordle)
+      const browserProvider = new BrowserProvider(provider)
+      
       // Get signer from provider
-      const signer = await provider.getSigner()
+      const signer = await browserProvider.getSigner()
       if (!signer) {
         throw new Error('Unable to get signer. Please ensure your wallet is connected and unlocked.')
       }

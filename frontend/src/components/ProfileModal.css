@@ -90,24 +90,38 @@
   gap: 0.75rem;
 }
 
-.profile-avatar {
+.profile-avatar,
+.profile-avatar-img {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 3px solid var(--border-color);
+}
+
+.profile-avatar-img {
+  object-fit: cover;
+}
+
+.profile-avatar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   font-size: 2rem;
   font-weight: bold;
   color: white;
-  border: 3px solid var(--border-color);
 }
 
 .profile-username {
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.profile-username-sub {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
 }
 
 .profile-info {

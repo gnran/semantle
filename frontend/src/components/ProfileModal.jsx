@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { sdk } from '@farcaster/miniapp-sdk'
+import { BrowserProvider } from 'ethers'
 import { getStatsFromChain, isContractConfigured } from '../utils/contract'
-import { getProvider } from '../utils/auth'
 import './ProfileModal.css'
 
-function ProfileModal({ isOpen, onClose, authState, onLogout }) {
+function ProfileModal({ isOpen, onClose, userInfo, onLogout }) {
   const [stats, setStats] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
 
   const loadStats = useCallback(async () => {
-    if (!authState.address) {
+    if (!userInfo?.walletAddress) {
       setStats(null)
       return
     }
@@ -22,12 +23,14 @@ function ProfileModal({ isOpen, onClose, authState, onLogout }) {
 
     setIsLoading(true)
     try {
-      const provider = await getProvider()
+      // Get provider from Farcaster SDK (like Wordle)
+      const provider = await sdk.wallet.getEthereumProvider()
       if (!provider) {
         throw new Error('Provider not available')
       }
 
-      const blockchainStats = await getStatsFromChain(authState.address, provider)
+      const browserProvider = new BrowserProvider(provider)
+      const blockchainStats = await getStatsFromChain(userInfo.walletAddress, browserProvider)
       
       // Map blockchain stats to display format
       setStats({
@@ -42,16 +45,16 @@ function ProfileModal({ isOpen, onClose, authState, onLogout }) {
     } finally {
       setIsLoading(false)
     }
-  }, [authState.address])
+  }, [userInfo?.walletAddress])
 
   useEffect(() => {
-    if (isOpen && authState.connected && authState.address) {
+    if (isOpen && userInfo?.walletAddress) {
       loadStats()
-    } else if (isOpen && authState.connected && !authState.address) {
+    } else if (isOpen && userInfo && !userInfo.walletAddress) {
       // User is connected but doesn't have a wallet address
       setStats(null)
     }
-  }, [isOpen, authState.connected, authState.address, loadStats])
+  }, [isOpen, userInfo?.walletAddress, loadStats])
 
   const formatAddress = (address) => {
     if (!address) return 'Not connected'
@@ -59,10 +62,13 @@ function ProfileModal({ isOpen, onClose, authState, onLogout }) {
   }
 
   const getAvatarInitials = () => {
-    if (authState.username) {
-      return authState.username.charAt(0).toUpperCase()
+    if (userInfo?.username) {
+      return userInfo.username.charAt(0).toUpperCase()
     }
-    if (authState.fid) {
+    if (userInfo?.displayName) {
+      return userInfo.displayName.charAt(0).toUpperCase()
+    }
+    if (userInfo?.fid) {
       return 'U'
     }
     return '?'
@@ -81,14 +87,25 @@ function ProfileModal({ isOpen, onClose, authState, onLogout }) {
         </div>
         
         <div className="profile-content">
-          {authState.connected ? (
+          {userInfo ? (
             <>
               <div className="profile-avatar-section">
-                <div className="profile-avatar">
-                  {getAvatarInitials()}
-                </div>
-                {authState.username && (
-                  <div className="profile-username">@{authState.username}</div>
+                {userInfo.pfpUrl ? (
+                  <img
+                    src={userInfo.pfpUrl}
+                    alt={userInfo.username || userInfo.displayName || 'User'}
+                    className="profile-avatar-img"
+                  />
+                ) : (
+                  <div className="profile-avatar">
+                    {getAvatarInitials()}
+                  </div>
+                )}
+                {userInfo.displayName && (
+                  <div className="profile-username">{userInfo.displayName}</div>
+                )}
+                {userInfo.username && userInfo.username !== userInfo.displayName && (
+                  <div className="profile-username-sub">@{userInfo.username}</div>
                 )}
               </div>
 
@@ -96,21 +113,21 @@ function ProfileModal({ isOpen, onClose, authState, onLogout }) {
                 <div className="profile-info-item">
                   <span className="profile-info-label">FID:</span>
                   <span className="profile-info-value">
-                    {authState.fid ? `#${authState.fid}` : 'Not available'}
+                    {userInfo.fid ? `#${userInfo.fid}` : 'Not available'}
                   </span>
                 </div>
 
                 <div className="profile-info-item">
                   <span className="profile-info-label">Wallet Address:</span>
-                  <span className="profile-info-value" title={authState.address}>
-                    {authState.address ? formatAddress(authState.address) : 'Not connected'}
+                  <span className="profile-info-value" title={userInfo.walletAddress}>
+                    {userInfo.walletAddress ? formatAddress(userInfo.walletAddress) : 'Not connected'}
                   </span>
                 </div>
               </div>
 
               <div className="profile-stats-section">
-                <h3>Current Stats {authState.address && <span className="profile-stats-source">(Blockchain)</span>}</h3>
-                {!authState.address ? (
+                <h3>Current Stats {userInfo.walletAddress && <span className="profile-stats-source">(Blockchain)</span>}</h3>
+                {!userInfo.walletAddress ? (
                   <div className="profile-stats-empty">
                     Connect your wallet to view blockchain stats.
                   </div>
@@ -142,7 +159,7 @@ function ProfileModal({ isOpen, onClose, authState, onLogout }) {
 
               <div className="profile-actions">
                 <button className="profile-logout-button" onClick={onLogout}>
-                  Logout
+                  Close
                 </button>
               </div>
             </>

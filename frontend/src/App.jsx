@@ -1,134 +1,93 @@
 import React, { useState, useEffect } from 'react'
 import { sdk } from '@farcaster/miniapp-sdk'
+import { BrowserProvider } from 'ethers'
 import Game from './components/Game'
 import Stats from './components/Stats'
 import Header from './components/Header'
 import LoadingScreen from './components/LoadingScreen'
 import FAQModal from './components/FAQModal'
 import ProfileModal from './components/ProfileModal'
-import { getAuthState, connectWallet, connectFarcaster, isAuthenticated } from './utils/auth'
 import './App.css'
 
 function App() {
   const [currentView, setCurrentView] = useState('game')
   const [sessionId, setSessionId] = useState(null)
-  const [authState, setAuthState] = useState({ connected: false })
-  const [isConnecting, setIsConnecting] = useState(false)
-  const [connectionMessage, setConnectionMessage] = useState('Connecting...')
+  const [userInfo, setUserInfo] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [showFAQModal, setShowFAQModal] = useState(false)
   const [showProfileModal, setShowProfileModal] = useState(false)
-  const [isInitializing, setIsInitializing] = useState(true)
 
+  // Notify SDK that app is ready
   useEffect(() => {
-    // Hide loading splash screen and display the app
     sdk.actions.ready()
-    
-    // Initialize and auto-connect
-    initializeAndConnect()
   }, [])
 
-  const initializeAndConnect = async () => {
-    setIsInitializing(true)
-    setConnectionMessage('Initializing...')
-    
-    try {
-      // Check existing auth state first
-      setConnectionMessage('Checking authentication...')
-      const existingState = await getAuthState()
-      const authenticated = await isAuthenticated()
-      
-      if (authenticated && existingState.connected) {
-        // Already authenticated
-        setAuthState(existingState)
-        setIsInitializing(false)
-        return
-      }
-
-      // Try to auto-connect
-      await autoConnect()
-    } catch (error) {
-      console.error('Failed to initialize and connect:', error)
-      // Even if connection fails, allow user to continue (they might not have wallet)
-      setIsInitializing(false)
-    }
-  }
-
-  const autoConnect = async () => {
-    setIsConnecting(true)
-    
-    try {
-      // Try Farcaster first (since we're in a Farcaster mini app)
-      setConnectionMessage('Connecting with Farcaster...')
-      try {
-        const state = await connectFarcaster()
-        if (state.connected) {
-          setAuthState(state)
-          setIsConnecting(false)
-          setIsInitializing(false)
-          return
-        }
-      } catch (farcasterError) {
-        console.log('Farcaster connection failed, trying Coinbase:', farcasterError)
-      }
-
-      // If Farcaster fails, try Coinbase Wallet
-      setConnectionMessage('Connecting wallet...')
-      try {
-        const state = await connectWallet()
-        if (state.connected) {
-          setAuthState(state)
-          setIsConnecting(false)
-          setIsInitializing(false)
-          return
-        }
-      } catch (walletError) {
-        console.log('Wallet connection failed:', walletError)
-      }
-
-      // If both fail, check if we at least have Farcaster context
-      setConnectionMessage('Checking Farcaster account...')
+  // Get user data from Context API and Wallet (exactly like Wordle)
+  useEffect(() => {
+    async function fetchUserInfo() {
       try {
         const context = await sdk.context
-        if (context?.user) {
-          // We have Farcaster context but no wallet - that's okay
-          const state = {
-            fid: context.user.fid,
-            username: context.user.username,
-            displayName: context.user.displayName,
-            pfpUrl: context.user.pfpUrl,
-            address: null,
-            connected: true,
-            loginMethod: 'farcaster',
-            connectedAt: Date.now()
+        const user = context.user
+        
+        let walletAddress = null
+        try {
+          const provider = await sdk.wallet.getEthereumProvider()
+          if (provider) {
+            // First try to get already connected accounts (without requesting permission)
+            let accounts = await provider.request({ method: 'eth_accounts' })
+            
+            // If no accounts, try to request (may show user prompt)
+            if (!accounts || accounts.length === 0) {
+              try {
+                accounts = await provider.request({ method: 'eth_requestAccounts' })
+              } catch (requestError) {
+                // User may reject the request - this is normal
+                console.log('User did not provide wallet access')
+              }
+            }
+            
+            if (accounts && accounts.length > 0) {
+              walletAddress = accounts[0]
+            }
           }
-          localStorage.setItem('semantle_auth', JSON.stringify(state))
-          setAuthState(state)
+        } catch (error) {
+          console.warn('Failed to get wallet address:', error)
         }
-      } catch (err) {
-        console.log('No Farcaster context available')
-      }
 
-    } catch (error) {
-      console.error('Auto-connect failed:', error)
-    } finally {
-      setIsConnecting(false)
-      setIsInitializing(false)
+        const newUserInfo = {
+          fid: user.fid,
+          username: user.username,
+          displayName: user.displayName,
+          pfpUrl: user.pfpUrl,
+          walletAddress
+        }
+
+        setUserInfo(newUserInfo)
+      } catch (error) {
+        console.error('Error fetching user data:', error)
+        // If user is not logged in, use null userInfo
+        setUserInfo(null)
+      } finally {
+        // Hide loading screen once connection process is complete
+        setIsLoading(false)
+      }
     }
-  }
+
+    fetchUserInfo()
+  }, [])
 
   const handleLogout = () => {
-    localStorage.removeItem('semantle_auth')
-    setAuthState({ connected: false })
+    // Clear user info (in Wordle, logout just closes modal)
     setShowProfileModal(false)
-    // Re-attempt auto-connect after logout
-    initializeAndConnect()
+    // Note: In Farcaster mini apps, user stays logged in to Farcaster
+    // We just clear local state if needed
   }
 
-  // Show loading screen while initializing or connecting
-  if (isInitializing || isConnecting) {
+  // Show loading screen while fetching user info
+  if (isLoading) {
     return (
       <div className="App">
-        <LoadingScreen message={connectionMessage} />
+        <LoadingScreen message="Loading..." />
       </div>
     )
   }
@@ -146,7 +105,7 @@ function App() {
       <ProfileModal
         isOpen={showProfileModal}
         onClose={() => setShowProfileModal(false)}
-        authState={authState}
+        userInfo={userInfo}
         onLogout={handleLogout}
       />
       <main className="main-content">
