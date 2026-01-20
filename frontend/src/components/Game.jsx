@@ -4,6 +4,8 @@ import GuessInput from './GuessInput'
 import GuessList from './GuessList'
 import GameInfo from './GameInfo'
 import { getUserId } from '../utils/userId'
+import { submitGameToChain, isContractConfigured } from '../utils/contract'
+import { getAuthState, initializeAuth, getProvider } from '../utils/auth'
 import './Game.css'
 
 // Use environment variable for API URL, fallback to '/api' for local development
@@ -36,6 +38,9 @@ function Game({ sessionId, setSessionId }) {
   const [error, setError] = useState(null)
   const [isDaily, setIsDaily] = useState(false)
   const [debugMode, setDebugMode] = useState(isDebugMode())
+  const [showTransactionPrompt, setShowTransactionPrompt] = useState(false)
+  const [transactionStatus, setTransactionStatus] = useState(null) // 'pending', 'success', 'error'
+  const [transactionError, setTransactionError] = useState(null)
 
   const saveGameState = (session, guessesList) => {
     try {
@@ -119,6 +124,11 @@ function Game({ sessionId, setSessionId }) {
     // Clear previous game state
     clearGameState()
     
+    // Reset transaction prompt state
+    setShowTransactionPrompt(false)
+    setTransactionStatus(null)
+    setTransactionError(null)
+    
     setIsLoading(true)
     setError(null)
     try {
@@ -191,6 +201,18 @@ function Game({ sessionId, setSessionId }) {
         } catch (err) {
           console.error('Error saving stats:', err)
         }
+
+        // Show transaction prompt if contract is configured and user has wallet
+        try {
+          const authState = await getAuthState()
+          if (authState.address && isContractConfigured()) {
+            setShowTransactionPrompt(true)
+            setTransactionStatus(null)
+            setTransactionError(null)
+          }
+        } catch (err) {
+          console.error('Error checking auth state:', err)
+        }
       } else {
         // Update session attempts count
         updatedSession = {
@@ -221,6 +243,59 @@ function Game({ sessionId, setSessionId }) {
     } catch {
       return false
     }
+  }
+
+  const handleSubmitToBlockchain = async () => {
+    if (!gameSession || !guesses.length) return
+
+    setTransactionStatus('pending')
+    setTransactionError(null)
+
+    try {
+      const authState = await getAuthState()
+      if (!authState.address) {
+        throw new Error('Wallet not connected. Please connect your wallet to submit stats.')
+      }
+
+      if (!isContractConfigured()) {
+        throw new Error('Contract not configured')
+      }
+
+      // Initialize auth and get provider
+      initializeAuth()
+      const provider = await getProvider()
+      if (!provider) {
+        throw new Error('Provider not available')
+      }
+
+      // Get signer from provider
+      const signer = await provider.getSigner()
+
+      // Submit game to blockchain
+      const attempts = guesses.length
+      const result = await submitGameToChain(attempts, signer)
+
+      if (result.success) {
+        setTransactionStatus('success')
+        // Hide prompt after 3 seconds
+        setTimeout(() => {
+          setShowTransactionPrompt(false)
+          setTransactionStatus(null)
+        }, 3000)
+      } else {
+        throw new Error('Transaction failed')
+      }
+    } catch (error) {
+      console.error('Error submitting to blockchain:', error)
+      setTransactionStatus('error')
+      setTransactionError(error.message || 'Failed to submit transaction')
+    }
+  }
+
+  const handleDismissTransaction = () => {
+    setShowTransactionPrompt(false)
+    setTransactionStatus(null)
+    setTransactionError(null)
   }
 
   return (
@@ -254,18 +329,66 @@ function Game({ sessionId, setSessionId }) {
             <h2>🎉 Congratulations!</h2>
             <p>You found the word: <strong>{gameSession.target_word}</strong></p>
             <p>It took you {guesses.length} attempt{guesses.length !== 1 ? 's' : ''}</p>
-            <button
-              className="new-game-button"
-              onClick={() => startNewGame(false)}
-            >
-              New Game
-            </button>
-            <button
-              className="daily-game-button"
-              onClick={() => startNewGame(true)}
-            >
-              Daily Challenge
-            </button>
+            
+            {showTransactionPrompt && (
+              <div className="transaction-prompt">
+                <h3>Submit Stats to Blockchain</h3>
+                <p>Would you like to submit your game result to the blockchain?</p>
+                <p className="transaction-info">This will record your {guesses.length} attempt{guesses.length !== 1 ? 's' : ''} on-chain.</p>
+                
+                {transactionStatus === 'pending' && (
+                  <div className="transaction-status pending">
+                    <p>⏳ Waiting for transaction confirmation...</p>
+                  </div>
+                )}
+                
+                {transactionStatus === 'success' && (
+                  <div className="transaction-status success">
+                    <p>✅ Stats successfully submitted to blockchain!</p>
+                  </div>
+                )}
+                
+                {transactionStatus === 'error' && (
+                  <div className="transaction-status error">
+                    <p>❌ {transactionError || 'Transaction failed'}</p>
+                  </div>
+                )}
+                
+                {!transactionStatus && (
+                  <div className="transaction-actions">
+                    <button
+                      className="submit-transaction-button"
+                      onClick={handleSubmitToBlockchain}
+                      disabled={isLoading}
+                    >
+                      Submit to Blockchain
+                    </button>
+                    <button
+                      className="dismiss-transaction-button"
+                      onClick={handleDismissTransaction}
+                      disabled={isLoading}
+                    >
+                      Skip
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <div className="game-actions">
+              <button
+                className="new-game-button"
+                onClick={() => startNewGame(false)}
+              >
+                New Game
+              </button>
+              <button
+                className="daily-game-button"
+                onClick={() => startNewGame(true)}
+              >
+                Daily Challenge
+              </button>
+            </div>
           </div>
         )}
 

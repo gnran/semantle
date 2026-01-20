@@ -49,6 +49,10 @@
   text-transform: uppercase;
 }
 
+.game-actions {
+  margin-top: 1.5rem;
+}
+
 .new-game-button,
 .daily-game-button {
   margin: 1rem 0.5rem;
@@ -69,6 +73,103 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   background: var(--hover-bg);
+}
+
+.transaction-prompt {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.transaction-prompt h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.3rem;
+}
+
+.transaction-prompt p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+.transaction-info {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  font-style: italic;
+}
+
+.transaction-status {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.transaction-status.pending {
+  background: rgba(255, 193, 7, 0.2);
+  border: 1px solid rgba(255, 193, 7, 0.4);
+}
+
+.transaction-status.success {
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.transaction-status.error {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+}
+
+.transaction-status p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.transaction-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.submit-transaction-button,
+.dismiss-transaction-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.submit-transaction-button {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.submit-transaction-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.dismiss-transaction-button {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dismiss-transaction-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.submit-transaction-button:disabled,
+.dismiss-transaction-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @media (max-width: 768px) {
