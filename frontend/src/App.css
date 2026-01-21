@@ -11,7 +11,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: var(--spacing-xl);
+  padding: var(--spacing-xl) var(--spacing-lg);
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
@@ -27,14 +27,14 @@
 }
 
 .loading-screen p {
-  font-size: 1.125rem;
+  font-size: var(--font-size-lg);
   color: var(--text-secondary);
   font-weight: 500;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.011em;
 }
 
 @media (max-width: 768px) {
   .main-content {
-    padding: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-sm);
   }
 }

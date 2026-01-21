@@ -19,24 +19,25 @@
 }
 
 .loading-spinner {
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   border: 3px solid var(--border-color);
   border-top-color: var(--accent-color);
   border-right-color: var(--accent-color);
   border-radius: 50%;
   animation: spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite;
   position: relative;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
 }
 
 .loading-spinner::before {
   content: '';
   position: absolute;
-  inset: -3px;
+  inset: -4px;
   border: 3px solid transparent;
   border-top-color: var(--accent-color);
   border-radius: 50%;
-  opacity: 0.3;
+  opacity: 0.25;
   animation: spin 1.2s linear infinite reverse;
 }
 
@@ -47,10 +48,10 @@
 }
 
 .loading-message {
-  font-size: 1.0625rem;
+  font-size: var(--font-size-lg);
   color: var(--text-secondary);
   margin: 0;
   text-align: center;
   font-weight: 500;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.011em;
 }

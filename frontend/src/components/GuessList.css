@@ -7,7 +7,8 @@
   padding: var(--spacing-2xl);
   color: var(--text-tertiary);
   font-style: italic;
-  font-size: 0.9375rem;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
 }
 
 .target-word-row {
@@ -15,56 +16,78 @@
   grid-template-columns: 60px 1fr 120px 150px;
   gap: var(--spacing-md);
   padding: var(--spacing-md) var(--spacing-lg);
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  background: var(--accent-gradient-subtle);
   border-radius: var(--radius-lg);
   margin-bottom: var(--spacing-md);
   align-items: center;
   border: 1.5px solid var(--accent-color);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-sm), 0 0 0 1px rgba(99, 102, 241, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+}
+
+.target-word-row::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, transparent 100%);
+  pointer-events: none;
 }
 
 .target-word-number {
   font-weight: 700;
   color: var(--accent-color);
   text-align: center;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
+  position: relative;
+  z-index: 1;
 }
 
 .target-word-text {
-  font-size: 1.125rem;
+  font-size: var(--font-size-lg);
   color: var(--text-primary);
   font-weight: 700;
   text-transform: capitalize;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.011em;
+  position: relative;
+  z-index: 1;
 }
 
 .target-word-similarity {
   text-align: right;
   font-weight: 700;
   color: var(--text-primary);
-  font-size: 1.0625rem;
+  font-size: var(--font-size-lg);
+  position: relative;
+  z-index: 1;
 }
 
 .target-word-proximity {
   text-align: right;
   font-weight: 700;
   color: var(--text-primary);
+  position: relative;
+  z-index: 1;
 }
 
 .proximity-flag {
-  font-size: 1.25rem;
+  font-size: var(--font-size-xl);
 }
 
 .sort-indicator {
   color: var(--text-tertiary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-xs);
   margin-bottom: var(--spacing-sm);
   padding-left: var(--spacing-lg);
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .guess-list-title {
-  font-size: 1.5rem;
+  font-size: var(--font-size-2xl);
   margin-bottom: var(--spacing-md);
   color: var(--text-primary);
   font-weight: 700;
@@ -79,18 +102,24 @@
   background: var(--bg-tertiary);
   border-radius: var(--radius-lg);
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
   margin-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--border-color);
+  border: 1px solid var(--border-color);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .guess-items {
   max-height: 600px;
   overflow-y: auto;
   border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .guess-items::-webkit-scrollbar {
@@ -104,6 +133,7 @@
 .guess-items::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: var(--radius-full);
+  transition: background 0.2s ease;
 }
 
 .guess-items::-webkit-scrollbar-thumb:hover {
@@ -117,7 +147,7 @@
   padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--border-color);
   align-items: center;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   background: transparent;
 }
 
@@ -127,34 +157,36 @@
 
 .guess-item:hover {
   background: var(--hover-bg);
+  transform: translateX(2px);
 }
 
 .guess-item.correct {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+  background: var(--accent-gradient-subtle);
   border-left: 3px solid var(--accent-color);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.08);
 }
 
 .guess-rank {
   font-weight: 600;
   color: var(--text-secondary);
   text-align: center;
-  font-size: 0.9375rem;
+  font-size: var(--font-size-sm);
 }
 
 .guess-word {
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   color: var(--text-primary);
   text-transform: capitalize;
   font-weight: 500;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.011em;
 }
 
 .guess-similarity {
   text-align: right;
   font-weight: 600;
   color: var(--text-primary);
-  font-size: 0.9375rem;
+  font-size: var(--font-size-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -172,7 +204,7 @@
 }
 
 .proximity-value {
-  font-size: 0.875rem;
+  font-size: var(--font-size-xs);
   z-index: 2;
   position: relative;
   white-space: nowrap;
@@ -185,16 +217,16 @@
   right: 0;
   top: 50%;
   transform: translateY(-50%);
-  height: 22px;
+  height: 24px;
   width: 100%;
   border-radius: var(--radius-sm);
   z-index: 0;
-  opacity: 0.2;
-  transition: opacity 0.2s ease;
+  opacity: 0.18;
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .guess-item:hover .proximity-bar {
-  opacity: 0.3;
+  opacity: 0.28;
 }
 
 .proximity-bar.high {
@@ -206,7 +238,7 @@
 }
 
 .proximity-text {
-  font-size: 0.875rem;
+  font-size: var(--font-size-xs);
   color: var(--text-tertiary);
   font-weight: 500;
 }
@@ -224,16 +256,16 @@
   .guess-item,
   .target-word-row {
     grid-template-columns: 50px 1fr 80px 100px;
-    font-size: 0.875rem;
+    font-size: var(--font-size-xs);
     gap: var(--spacing-sm);
     padding: var(--spacing-sm) var(--spacing-md);
   }
   
   .proximity-value {
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
   }
   
   .guess-list-title {
-    font-size: 1.25rem;
+    font-size: var(--font-size-xl);
   }
 }

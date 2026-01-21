@@ -6,19 +6,25 @@
 
 .stats-card {
   background: var(--card-bg);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   padding: var(--spacing-2xl);
   box-shadow: var(--shadow-xl);
   width: 100%;
   max-width: 900px;
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stats-card:hover {
+  border-color: var(--border-color-hover);
+  box-shadow: var(--shadow-xl), var(--shadow-glow);
 }
 
 .stats-card h2 {
-  font-size: 2rem;
+  font-size: var(--font-size-4xl);
   margin-bottom: var(--spacing-2xl);
   color: var(--text-primary);
   text-align: center;
@@ -40,28 +46,51 @@
   border-radius: var(--radius-xl);
   text-align: center;
   box-shadow: var(--shadow-lg), var(--shadow-glow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.stat-box:hover::before {
+  opacity: 1;
 }
 
 .stat-box:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-xl), 0 0 30px rgba(99, 102, 241, 0.4);
+  box-shadow: var(--shadow-xl), var(--shadow-glow-strong);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .stat-value {
-  font-size: 3rem;
+  font-size: var(--font-size-4xl);
   font-weight: 700;
   margin-bottom: var(--spacing-sm);
   letter-spacing: -0.02em;
   line-height: 1;
+  position: relative;
+  z-index: 1;
 }
 
 .stat-label {
-  font-size: 0.9375rem;
-  opacity: 0.95;
+  font-size: var(--font-size-sm);
+  opacity: 0.98;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 600;
+  position: relative;
+  z-index: 1;
 }
 
 .games-history {
@@ -69,7 +98,7 @@
 }
 
 .games-history h3 {
-  font-size: 1.5rem;
+  font-size: var(--font-size-2xl);
   margin-bottom: var(--spacing-md);
   color: var(--text-primary);
   font-weight: 700;
@@ -84,6 +113,11 @@
   overflow-y: auto;
   border-radius: var(--radius-lg);
   padding-right: var(--spacing-xs);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: var(--spacing-sm);
 }
 
 .history-list::-webkit-scrollbar {
@@ -97,6 +131,7 @@
 .history-list::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: var(--radius-full);
+  transition: background 0.2s ease;
 }
 
 .history-list::-webkit-scrollbar-thumb:hover {
@@ -108,22 +143,26 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-lg);
-  background: var(--bg-secondary);
+  background: var(--bg-tertiary);
   border-radius: var(--radius-lg);
   border-left: 3px solid var(--border-color);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid var(--border-color);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .history-item:hover {
   background: var(--hover-bg);
   transform: translateX(4px);
   border-color: var(--border-color-hover);
+  box-shadow: var(--shadow-sm);
 }
 
 .history-item.completed {
   border-left-color: var(--accent-color);
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+  background: var(--accent-gradient-subtle);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.08);
 }
 
 .history-item.incomplete {
@@ -131,7 +170,7 @@
 }
 
 .history-word {
-  font-size: 1.125rem;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--text-primary);
   text-transform: uppercase;
@@ -148,7 +187,7 @@
 
 .history-attempts {
   color: var(--text-secondary);
-  font-size: 0.9375rem;
+  font-size: var(--font-size-sm);
   font-weight: 500;
 }
 
@@ -157,10 +196,13 @@
   color: white;
   padding: var(--spacing-xs) var(--spacing-md);
   border-radius: var(--radius-full);
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.05em;
   box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .completed-badge {
@@ -168,7 +210,7 @@
   color: white;
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-full);
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   min-width: 24px;
   height: 24px;
@@ -176,11 +218,12 @@
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .history-date {
   color: var(--text-tertiary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-xs);
   font-weight: 500;
 }
 
@@ -189,11 +232,12 @@
   color: var(--text-tertiary);
   font-style: italic;
   padding: var(--spacing-2xl);
-  font-size: 0.9375rem;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
 }
 
 .error {
-  color: #fca5a5;
+  color: var(--error-color);
   text-align: center;
   margin-bottom: var(--spacing-md);
   font-weight: 500;
@@ -202,11 +246,11 @@
 @media (max-width: 768px) {
   .stats-card {
     padding: var(--spacing-lg);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
   }
   
   .stats-card h2 {
-    font-size: 1.5rem;
+    font-size: var(--font-size-2xl);
   }
   
   .stats-grid {
@@ -219,11 +263,11 @@
   }
   
   .stat-value {
-    font-size: 2rem;
+    font-size: var(--font-size-3xl);
   }
   
   .stat-label {
-    font-size: 0.8125rem;
+    font-size: var(--font-size-xs);
   }
   
   .history-item {
@@ -234,7 +278,7 @@
   
   .history-word {
     min-width: auto;
-    font-size: 1rem;
+    font-size: var(--font-size-base);
   }
   
   .history-details {
